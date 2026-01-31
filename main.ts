@@ -165,6 +165,108 @@ app.get('/api/getDailyReport', async (req, res) => {
 	}
 })
 
+//Endpoint para procesos de inscripcion masiva
+
+app.post('/api/registerStudents', tokenVerification.forAdmins, async (req, res) => {
+	try{
+		const dbResponse = await db.registerStudents(req.body)
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.get('/api/getStudentById/:id', tokenVerification.forAdmins,  async (req, res) => {
+	const id = Number(req.params.id)
+	try{
+		const dbResponse = await db.getStudentById(id)
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.get('/api/getStudents/:page', tokenVerification.forAdmins, async (req, res) => {
+	const page = Number(req.params.page)
+	try{
+		const dbResponse = await db.getStudents(page)
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.post('/api/openPeriods', tokenVerification.forAdmins, async (req, res) => {
+	try{
+		const dbResponse = await db.openPeriods(req.body)
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.post('/api/closePeriod', tokenVerification.forAdmins, async (req, res) => {
+	const {year, periodId} = req.body
+	try{
+		const dbResponse = await db.closePeriod(year, periodId)
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.post('/api/setCourse', tokenVerification.forAdmins, async (req, res) => {
+	const {id, description} = req.body
+	try{
+		const dbResponse = await db.setCourse(id, description)
+		res.status(200).send(dbResponse)		
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.post('/api/setModule', tokenVerification.forAdmins, async (req, res) => {
+	const {id, description, courseId} = req.body
+	try{
+		const dbResponse = await db.setModule(id, description, courseId)
+		res.status(200).send(dbResponse)		
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.post('/api/registerEnrollment', tokenVerification.forAdmins, async (req, res) => {
+	const {studentId, periodId, moduleIds, state} = req.body
+	try{
+		const dbResponse = await db.registerEnrollment(studentId, periodId, moduleIds, state)
+		res.status(200).send(dbResponse)		
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.patch('/api/updateEnrollmentState', tokenVerification.forAdmins, async (req, res) => {
+	const {enrollmentId, newState} = req.body
+	try{
+		const dbResponse = await db.updateEnrollmentState(enrollmentId, newState)
+		res.status(200).send(dbResponse)		
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+///Falta el endpoint para cargar notas de estudiantes
+
+//Endpoint para obtener configuraciones
 app.get('/api/getSettings', tokenVerification.forAdmins, async (req, res) => {
 	try{
 		const dbResponse = await db.getSettings()

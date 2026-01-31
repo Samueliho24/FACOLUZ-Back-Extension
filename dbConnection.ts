@@ -2,6 +2,7 @@ import mariadb from 'npm:mariadb'
 import * as t from './interfaces.ts'
 import "jsr:@std/dotenv/load";
 
+
 const db = mariadb.createPool({
 	host: Deno.env.get("BDD_HOST"),
 	user: Deno.env.get("BDD_USER"),
@@ -194,3 +195,109 @@ export async function getDailyReportInfo(start: Date, end: Date){
 	`, [start, end])
 	return res
 }
+
+//Querys para inscripcion
+
+export async function registerStudents(data: t.newStudent[]){
+	const values = data.map((user) => [
+		user.name,
+		user.lastName,
+		user.photo,
+		user.identification,
+		user.birthDate,
+		user.email,
+		user.phone,
+		user.address,
+		user.instructionGrade
+	])
+	const res = await execute(`
+		INSERT INTO students(name, lastName, photo, identification, birthDate, email, phone, address, instructionGrade)
+		VALUES ?	
+	`, [values])
+	return res
+}
+
+export async function getStudentById(id: number){
+	const res = await query(`
+		SELECT * FROM students
+		WHERE id = ?
+	`, [id])
+	return res
+}
+export async function getStudents(page: number){
+	const res = await query(`
+		SELECT * FROM students
+		LIMIT 10 OFFSET ?
+	`, [(page-1)*10])
+	return res
+}
+
+export async function openPeriods(data: t.newPeriod[]){
+	const values = data.map((period) => [
+		period.year,
+		period.period,
+		period.startDate,
+		period.endDate //Confirmar si esta fecha se dicta al iniciar el periodo o al finalizarlo
+	])
+	const res = await execute(`
+		INSERT INTO periods(year, period, startDate, endDate)
+		VALUES ?	
+	`, [values])
+	return res
+}
+
+export async function closePeriod(year: number, periodId: number){
+	const res = await execute(`
+		UPDATE periods 
+		SET status = 'Finalizado'
+		WHERE year = ? AND period = ?	
+	`, [year, periodId])
+	return res
+}
+
+//Registro de cursos
+export async function setCourse(id: number, description: string){
+	const res = await execute(`
+		INSERT INTO courses(id, description)
+		VALUES(?, ?)	
+	`, [id, description])
+	return res
+}
+
+//Registro de modulos para los cursos
+export async function setModule(id: number, description: string, courseId: number){
+	const res = await execute(`
+		INSERT INTO modules(id, description, courseId)
+		VALUES(?, ?, ?)	
+	`, [id, description, courseId])
+	return res
+}
+
+//Registro de inscripcion modulos
+export async function registerEnrollment(studentId: string, periodId: string, moduleIds: number[], state: 'Pagada' | 'Deuda' = 'Deuda') {
+	const enrollmentId = crypto.randomUUID()
+	const res1 =await execute(`
+		INSERT INTO enrollments(id, studentsId, periodId, dateEnrollments, state)
+		VALUES(?, ?, ?, NOW(), ?)
+	`, [enrollmentId, studentId, periodId, state])
+	if (moduleIds && moduleIds.length > 0) {
+		const values = moduleIds.map((m) => [enrollmentId, m])
+		await execute(`
+			INSERT INTO enrollments_modules(enrollmentId, moduleId)
+			VALUES ?
+		`, [values])
+	}
+	return res1
+}
+
+export async function updateEnrollmentState(enrollmentId: string, newState: string){
+	const res = await execute(`
+		UPDATE enrollments 
+		SET state = ?
+		WHERE id = ?	
+	`, [newState, enrollmentId])
+	return res
+}
+///Falta la query para cargar las notas de los estudiantes
+
+//Fin de querys para inscripcion
