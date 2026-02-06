@@ -157,18 +157,18 @@ export async function getInvoicesByPayer(page: number, identification: number){
 	return res
 }
 
-export async function setSettings(){
+// export async function setSettings(){
 
-}
+// }
 
-export async function getSettings(){
-	const res = await query(`
-		SELECT * from settings
-		WHERE 
-			label != 'startedPeriod' 
-	`)
-	return res
-}
+// export async function getSettings(){
+// 	const res = await query(`
+// 		SELECT * from settings
+// 		WHERE 
+// 			label != 'startedPeriod' 
+// 	`)
+// 	return res
+// }
 
 export async function getLogs(page: number) {
 	const res = await query(`
@@ -255,22 +255,30 @@ export async function closePeriod(year: number, periodId: number){
 	return res
 }
 
+export async function getAllCourses(){
+	const res = await query(`SELECT * FROM courses`)
+	return res
+}
+
 //Registro de cursos
-export async function setCourse(id: number, description: string){
-	const res = await execute(`
-		INSERT INTO courses(id, description)
-		VALUES(?, ?)	
-	`, [id, description])
+export async function setCourse(description: string){
+	const _res = await execute(`
+		INSERT INTO courses(description)
+		VALUES(?)	
+	`, [description])
+}
+
+export async function getAllModules(){
+	const res = await query(`SELECT * FROM modules`)
 	return res
 }
 
 //Registro de modulos para los cursos
-export async function setModule(id: number, description: string, courseId: number){
-	const res = await execute(`
-		INSERT INTO modules(id, description, courseId)
-		VALUES(?, ?, ?)	
-	`, [id, description, courseId])
-	return res
+export async function setModule(description: string){
+	const _res = await execute(`
+		INSERT INTO modules(description)
+		VALUES(?)	
+	`, [description])
 }
 
 //Registro de inscripcion modulos

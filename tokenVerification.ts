@@ -69,8 +69,6 @@ export function forAdmins(req, res, next){
 		const payload = jwt.verify(token, secret)
 		if(Date().now > payload.exp){
 			res.status(401).send('Sesion expirada')
-		}else if(payload.type != 5){
-			res.status(401).send('Usted no es un administrador de sistemas')
 		}else{
 			next()
 		}

@@ -5,6 +5,7 @@ import * as db from './dbConnection.ts'
 import * as tokenVerification from './tokenVerification.ts'
 import "jsr:@std/dotenv/load";
 import { BuildReport } from "./PdfModels/DailyReport.ts";
+import { randomUUID } from "node:crypto";
 
 const port = Deno.env.get("PORT")
 const secret = Deno.env.get("SECRET")
@@ -25,8 +26,6 @@ app.post('/api/login', async (req, res) => {
 			res.status(401).send('Contraseña Incorrecta')
 		}else if(dbResponse[0].active == false){
 			res.status(404).send('Este usuario se encuentra inactivo')
-		}else if(dbResponse[0].type != 5 && dbResponse[0].type != 6){
-			res.status(401).send('Usted no es personal administrativo')
 		}else{
 			const token = jwt.sign({
 				id: dbResponse[0].id,
@@ -220,22 +219,42 @@ app.post('/api/closePeriod', tokenVerification.forAdmins, async (req, res) => {
 	}
 })
 
-app.post('/api/setCourse', tokenVerification.forAdmins, async (req, res) => {
-	const {id, description} = req.body
+app.post('/api/course', tokenVerification.forAdmins, async (req, res) => {
+	const {description} = req.body
 	try{
-		const dbResponse = await db.setCourse(id, description)
-		res.status(200).send(dbResponse)		
+		const _dbResponse = await db.setCourse(description)
+		res.status(200)		
 	}catch(err){
 		console.log(err)
 		res.status(500).send(err)
 	}
 })
 
-app.post('/api/setModule', tokenVerification.forAdmins, async (req, res) => {
-	const {id, description, courseId} = req.body
+app.post('/api/module', tokenVerification.forAdmins, async (req, res) => {
+	const {description} = req.body
 	try{
-		const dbResponse = await db.setModule(id, description, courseId)
-		res.status(200).send(dbResponse)		
+		const _dbResponse = await db.setModule(description)
+		res.status(200)		
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.get('/api/course', tokenVerification.forAdmins, async (req, res) => {
+	try{
+		const dbResponse = await db.getAllCourses()
+		res.status(200).send(dbResponse)	
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.get('/api/module', tokenVerification.forAdmins, async (req, res) => {
+	try{
+		const dbResponse = await db.getAllModules()
+		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
 		res.status(500).send(err)
@@ -267,15 +286,15 @@ app.patch('/api/updateEnrollmentState', tokenVerification.forAdmins, async (req,
 ///Falta el endpoint para cargar notas de estudiantes
 
 //Endpoint para obtener configuraciones
-app.get('/api/getSettings', tokenVerification.forAdmins, async (req, res) => {
-	try{
-		const dbResponse = await db.getSettings()
-		res.status(200).send(dbResponse)
-	}catch(err){
-		console.log(err)
-		res.status(500).send(err)
-	}
-})
+// app.get('/api/getSettings', tokenVerification.forAdmins, async (req, res) => {
+// 	try{
+// 		const dbResponse = await db.getSettings()
+// 		res.status(200).send(dbResponse)
+// 	}catch(err){
+// 		console.log(err)
+// 		res.status(500).send(err)
+// 	}
+// })
 
 app.listen(port, "0.0.0.0", () => {
 	console.log(`Puerto: ${port}`)
