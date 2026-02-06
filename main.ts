@@ -169,8 +169,8 @@ app.get('/api/getDailyReport', async (req, res) => {
 
 app.post('/api/registerStudents', tokenVerification.forAdmins, async (req, res) => {
 	try{
-		const dbResponse = await db.registerStudents(req.body)
-		res.status(200).send(dbResponse)
+		const _dbResponse = await db.registerStudents(req.body)
+		res.status(200)
 	}catch(err){
 		console.log(err)
 		res.status(500).send(err)

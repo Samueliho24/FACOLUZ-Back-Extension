@@ -198,23 +198,20 @@ export async function getDailyReportInfo(start: Date, end: Date){
 
 //Querys para inscripcion
 
-export async function registerStudents(data: t.newStudent[]){
-	const values = data.map((user) => [
-		user.name,
-		user.lastName,
-		user.photo,
-		user.identification,
-		user.birthDate,
-		user.email,
-		user.phone,
-		user.address,
-		user.instructionGrade
-	])
-	const res = await execute(`
-		INSERT INTO students(name, lastName, photo, identification, birthDate, email, phone, address, instructionGrade)
-		VALUES ?	
-	`, [values])
-	return res
+export async function registerStudents(user: t.newStudent){
+		const name = user.name
+		const lastName = user.lastName
+		const identification = user.identification
+		const birthDate = user.birthDate
+		const email = user.email
+		const phone = user.phone
+		const address = user.address
+		const instructionGrade = user.instructionGrade
+
+	const _res = await execute(`
+		INSERT INTO students(name, lastName, studentsId, birthDate, email, phone, address, instructionGrade)
+		VALUES(?, ?, ?, ?, ?, ?, ?, ?)	
+	`, [name, lastName, identification, birthDate, email, phone, address, instructionGrade])
 }
 
 export async function getStudentById(id: number){
