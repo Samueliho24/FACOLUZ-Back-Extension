@@ -281,6 +281,21 @@ export async function setModule(description: string){
 	`, [description])
 }
 
+export async function assignModuleToCourse(courseId: string, moduleId: string){
+	const _res = await execute(`
+		INSERT INTO modules_courses(moduleid, courseid)
+		VALUES(?, ?)	
+	`, [moduleId, courseId])
+}
+
+export async function getAssignedModulesByCourse(courseId: string){
+	const res = await query(`
+		SELECT * FROM modules_courses
+		WHERE courseid = ?
+	`, [courseId])
+	return res
+}
+
 //Registro de inscripcion modulos
 export async function registerEnrollment(studentId: string, periodId: string, moduleIds: number[], state: 'Pagada' | 'Deuda' = 'Deuda') {
 	const enrollmentId = crypto.randomUUID()

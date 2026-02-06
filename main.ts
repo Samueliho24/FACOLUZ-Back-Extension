@@ -261,6 +261,28 @@ app.get('/api/module', tokenVerification.forAdmins, async (req, res) => {
 	}
 })
 
+app.post('/api/assignModuleToCourse', tokenVerification.forAdmins, async (req, res) => {
+	const {moduleId, courseId} = req.body
+	try{
+		const _dbResponse = await db.assignModuleToCourse(courseId, moduleId)
+		res.status(200)		
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.post('/api/getAssignedModules', tokenVerification.forAdmins, async (req, res) => {
+	const {courseId} = req.body
+	try{
+		const dbResponse = await db.getAssignedModulesByCourse(courseId)
+		res.status(200).send(dbResponse)		
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
 app.post('/api/registerEnrollment', tokenVerification.forAdmins, async (req, res) => {
 	const {studentId, periodId, moduleIds, state} = req.body
 	try{
