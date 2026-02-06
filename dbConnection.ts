@@ -220,7 +220,7 @@ export async function registerStudents(data: t.newStudent[]){
 export async function getStudentById(id: number){
 	const res = await query(`
 		SELECT * FROM students
-		WHERE id = ?
+		WHERE studentId = ?
 	`, [id])
 	return res
 }
@@ -243,6 +243,23 @@ export async function openPeriods(data: t.newPeriod[]){
 		INSERT INTO periods(year, period, startDate, endDate)
 		VALUES ?	
 	`, [values])
+	return res
+}
+
+export async function getCurrentPeriod(){
+	const res = await query(`
+		SELECT id, year, period, startDate, endDate FROM periods
+		WHERE state = 'En curso'
+	`)
+	return res
+}
+
+export async function changeEndDatePeriod(year: number, periodId: number, newEndDate: Date){
+	const res = await execute(`
+		UPDATE periods 
+		SET endDate = ?
+		WHERE year = ? AND period = ?	
+	`, [newEndDate, year, periodId])
 	return res
 }
 
@@ -273,6 +290,25 @@ export async function getAllModules(){
 	return res
 }
 
+export async function getSearchedModule(description: string){
+	const res = await query(`
+		SELECT * FROM modules
+		WHERE description LIKE ?
+	`, [`%${description}%`])
+	return res
+}
+
+export async function getEnrolledStudentsByModule(moduleId: number){
+	const res = await query(`
+		SELECT s.name, s.lastName, s.studentId, s.email, s.phone, s.address, s.instructionGrade, e.dateEnrollments, e.state
+		FROM enrollments e
+		JOIN enrollments_modules em ON e.id = em.enrollmentId
+		JOIN students s ON e.studentId = s.id
+		WHERE em.moduleId = ?
+	`, [moduleId])
+	return res
+}
+
 //Registro de modulos para los cursos
 export async function setModule(description: string){
 	const _res = await execute(`
@@ -300,7 +336,7 @@ export async function getAssignedModulesByCourse(courseId: string){
 export async function registerEnrollment(studentId: string, periodId: string, moduleIds: number[], state: 'Pagada' | 'Deuda' = 'Deuda') {
 	const enrollmentId = crypto.randomUUID()
 	const res1 =await execute(`
-		INSERT INTO enrollments(id, studentsId, periodId, dateEnrollments, state)
+		INSERT INTO enrollments(id, studentId, periodId, dateEnrollments, state)
 		VALUES(?, ?, ?, NOW(), ?)
 	`, [enrollmentId, studentId, periodId, state])
 	if (moduleIds && moduleIds.length > 0) {

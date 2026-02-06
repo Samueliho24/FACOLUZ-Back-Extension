@@ -17,6 +17,7 @@ app.use(express.urlencoded({extended: true}))
 
 app.post('/api/login', async (req, res) => {
 	const {passwordHash} = req.body
+	console.log(req.body)
 	let dbResponse
 	try{
 		dbResponse = await db.login(req.body)
@@ -180,6 +181,10 @@ app.get('/api/getStudentById/:id', tokenVerification.forAdmins,  async (req, res
 	const id = Number(req.params.id)
 	try{
 		const dbResponse = await db.getStudentById(id)
+		if(dbResponse.length == 0){
+			res.status(404).send({error: 'Estudiante no encontrado'})
+			return
+		}
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
@@ -201,6 +206,27 @@ app.get('/api/getStudents/:page', tokenVerification.forAdmins, async (req, res) 
 app.post('/api/openPeriods', tokenVerification.forAdmins, async (req, res) => {
 	try{
 		const dbResponse = await db.openPeriods(req.body)
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.get('/api/getCurrentPeriod', tokenVerification.forAdmins, async (req, res) => {
+	try{
+		const dbResponse = await db.getCurrentPeriod()
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.patch('/api/changeEndDatePeriod', tokenVerification.forAdmins, async (req, res) => {
+	const {year, periodId, newEndDate} = req.body
+	try{
+		const dbResponse = await db.changeEndDatePeriod(year, periodId, newEndDate)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
@@ -251,9 +277,31 @@ app.get('/api/course', tokenVerification.forAdmins, async (req, res) => {
 	}
 })
 
-app.get('/api/module', tokenVerification.forAdmins, async (req, res) => {
+app.get('/api/getAllModules', tokenVerification.forAdmins, async (req, res) => {
 	try{
 		const dbResponse = await db.getAllModules()
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.get('/api/getSearchedModule/:idParam', tokenVerification.forAdmins, async (req, res) => {
+	const idParam = req.params.idParam
+	try{
+		const dbResponse = await db.getSearchedModule(idParam)
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)		
+		res.status(404).send('Modulo no encontrado')
+	}
+})
+
+app.get('/api/getEnrolledStudentsByModule/:idParam', tokenVerification.forAdmins, async (req, res) => {
+	const idParam = req.params.idParam
+	try{
+		const dbResponse = await db.getEnrolledStudentsByModule(idParam)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
