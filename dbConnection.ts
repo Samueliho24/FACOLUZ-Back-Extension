@@ -31,8 +31,7 @@ async function execute(query: string, params?: object) {
 	let connection
 	try{
 		connection = await db.getConnection()
-		const res = await connection.execute(query, params)
-		return res
+		const _res = await connection.execute(query, params)
 	}catch(err){
 		console.log(err)
 		throw err

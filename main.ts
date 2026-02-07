@@ -170,7 +170,7 @@ app.get('/api/getDailyReport', async (req, res) => {
 app.post('/api/registerStudents', tokenVerification.forAdmins, async (req, res) => {
 	try{
 		const _dbResponse = await db.registerStudents(req.body)
-		res.status(200)
+		res.status(200).send()
 	}catch(err){
 		console.log(err)
 		res.status(500).send(err)
@@ -249,7 +249,7 @@ app.post('/api/course', tokenVerification.forAdmins, async (req, res) => {
 	const {description} = req.body
 	try{
 		const _dbResponse = await db.setCourse(description)
-		res.status(200)		
+		res.status(200).send()	
 	}catch(err){
 		console.log(err)
 		res.status(500).send(err)
@@ -260,7 +260,7 @@ app.post('/api/module', tokenVerification.forAdmins, async (req, res) => {
 	const {description} = req.body
 	try{
 		const _dbResponse = await db.setModule(description)
-		res.status(200)		
+		res.status(200).send()		
 	}catch(err){
 		console.log(err)
 		res.status(500).send(err)
@@ -313,7 +313,7 @@ app.post('/api/assignModuleToCourse', tokenVerification.forAdmins, async (req, r
 	const {moduleId, courseId} = req.body
 	try{
 		const _dbResponse = await db.assignModuleToCourse(courseId, moduleId)
-		res.status(200)		
+		res.status(200).send()
 	}catch(err){
 		console.log(err)
 		res.status(500).send(err)
