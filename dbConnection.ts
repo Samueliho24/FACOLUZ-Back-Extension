@@ -216,7 +216,7 @@ export async function registerStudents(user: t.newStudent){
 export async function getStudentById(id: number){
 	const res = await query(`
 		SELECT * FROM students
-		WHERE studentId = ?
+		WHERE studentsId = ?
 	`, [id])
 	return res
 }
@@ -296,10 +296,10 @@ export async function getSearchedModule(description: string){
 
 export async function getEnrolledStudentsByModule(moduleId: number){
 	const res = await query(`
-		SELECT s.name, s.lastName, s.studentId, s.email, s.phone, s.address, s.instructionGrade, e.dateEnrollments, e.state
+		SELECT s.name, s.lastName, s.studentsId, s.email, s.phone, s.address, s.instructionGrade, e.dateEnrollments, e.state
 		FROM enrollments e
 		JOIN enrollments_modules em ON e.id = em.enrollmentId
-		JOIN students s ON e.studentId = s.id
+		JOIN students s ON e.studentsId = s.id
 		WHERE em.moduleId = ?
 	`, [moduleId])
 	return res

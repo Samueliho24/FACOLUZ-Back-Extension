@@ -182,7 +182,7 @@ app.get('/api/getStudentById/:id', tokenVerification.forAdmins,  async (req, res
 	try{
 		const dbResponse = await db.getStudentById(id)
 		if(dbResponse.length == 0){
-			res.status(404).send({error: 'Estudiante no encontrado'})
+			res.status(404).send('Estudiante no encontrado')
 			return
 		}
 		res.status(200).send(dbResponse)
