@@ -366,6 +366,50 @@ app.patch('/api/updateEnrollmentState', tokenVerification.forAdmins, async (req,
 // 	}
 // })
 
+app.get("/api/filterStudents/:param", tokenVerification.forAdmins, async(req, res) => {
+	try{
+		const { param } = req.params;
+		const dbResponse = await db.filterStudents(param)
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.get("/api/filterTeachers/:param", tokenVerification.forAdmins, async(req, res) => {
+	try{
+		const { param } = req.params;
+		const dbResponse = await db.filterTeachers(param)
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.get("/api/filterModules/:param", tokenVerification.forAdmins, async(req, res) => {
+	try{
+		const { param } = req.params;
+		const dbResponse = await db.filterModules(param)
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.get("/api/filterCourses/:param", tokenVerification.forAdmins, async(req, res) => {
+	try{
+		const { param } = req.params;
+		const dbResponse = await db.filterCourses(param)
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
 app.listen(port, "0.0.0.0", () => {
 	console.log(`Puerto: ${port}`)
 })

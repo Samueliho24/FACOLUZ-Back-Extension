@@ -356,3 +356,43 @@ export async function updateEnrollmentState(enrollmentId: string, newState: stri
 ///Falta la query para cargar las notas de los estudiantes
 
 //Fin de querys para inscripcion
+
+export async function filterStudents(param: string){
+	const res = await query(`
+		SELECT * FROM students
+		WHERE
+			name LIKE ?
+			OR lastname LIKE ?
+			OR 	studentsId LIKE ?
+	`, [param, param, Number(param)])
+	return res;
+}
+
+export async function filterTeachers(param: string){
+	const res = await query(`
+		SELECT * FROM teachers
+		WHERE
+			name LIKE ?
+			OR lastname LIKE ?
+			OR 	studentsId LIKE ?
+	`, [param, param, Number(param)])
+	return res;
+}
+
+export async function filterModules(param: string){
+	const res = await query(`
+		SELECT * FROM modules
+		WHERE
+			description LIKE ?
+	`, [param])
+	return res;
+}
+
+export async function filterCourses(param: string){
+	const res = await query(`
+		SELECT * FROM courses
+		WHERE
+			description LIKE ?
+	`, [param])
+	return res;
+}
