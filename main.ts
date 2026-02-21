@@ -410,6 +410,14 @@ app.get("/api/filterCourses/:param", tokenVerification.forAdmins, async(req, res
 	}
 })
 
+app.get("/api/certificate/:certificateId", tokenVerification.forAdmins, async(req, res) => {
+	try{
+		
+	}catch(err){
+
+	}
+})
+
 app.listen(port, "0.0.0.0", () => {
 	console.log(`Puerto: ${port}`)
 })

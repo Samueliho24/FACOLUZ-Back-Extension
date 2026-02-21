@@ -1,6 +1,7 @@
 import mariadb from 'npm:mariadb'
 import * as t from './interfaces.ts'
 import "jsr:@std/dotenv/load";
+import { UUID } from "node:crypto";
 
 
 const db = mariadb.createPool({
@@ -394,5 +395,18 @@ export async function filterCourses(param: string){
 		WHERE
 			description LIKE ?
 	`, [param])
+	return res;
+}
+
+export async function getCertificateInfo(certificateId: string){
+	const res = await query(`
+		select
+			s.name,
+			s.lastname,
+			c2.description as course_name,
+			c.id as centificate_id
+		from certificates c join courses c2 on c2.id = c.courseId join students s on c.studentId = s.id 
+		where c.id = ?	
+	`, [certificateId])
 	return res;
 }
