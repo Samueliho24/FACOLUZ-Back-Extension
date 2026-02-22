@@ -6,37 +6,16 @@ export function BuildReport(dataCallback, endCallback, invoiceList: Iinvoice[]){
     const date = new Date()
 
     //Cantidades
-    const facturasExoneradas = FacturasExoneradas(invoiceList)
-    const facturasDolares = FacturasDolares(invoiceList)
-    const facturasBsTranf = FacturasBsTranf(invoiceList)
-    const facturasBsEfectivo = FacturasBsEfectivo(invoiceList)
-
-    //Montos
-    const totalDolares = calcularIngreso(facturasDolares)
-    const totalBsEfectivo = calcularIngreso(facturasBsEfectivo)
-    const totalBsTranf = calcularIngreso(facturasBsTranf)
-
-    //Consultas
-    const facturasCirugia = FacturasCirugia(invoiceList)
-    const facturasEndodoncia = FacturasEndodoncia(invoiceList)
-    const facturasOrtodoncia = FacturasOrtodoncia(invoiceList)
-    const facturasPeridoncia = FacturasPeridoncia(invoiceList)
-    const facturasProtesisTotal = FacturasProtesisTotal(invoiceList)
-    const facturasProtesisParcialRemovible = FacturasProtesisParcialRemovible(invoiceList)
-    const facturasProtesisParcialFija = FacturasProtesisParcialFija(invoiceList)
-    const facturasCia = FacturasCia(invoiceList)
-    const facturasCian = FacturasCian(invoiceList)
-    const facturasEmergenciaCia = FacturasEmergenciaCia(invoiceList)
-    const facturasEmergenciaCian = FacturasEmergenciaCian(invoiceList)
+    const reporteDetalladoGeneral = ReporteDetalladoGeneral(invoiceList)
 
     doc.on('data', dataCallback)
     doc.on('end', endCallback)
 
     doc.image('./assets/Logo_LUZ.png', 70, 50, {width: 60, align: 'center', valign: 'center'})
     doc.image('./assets/Logo_FacoLuz.png', 450, 60, {width: 110, align: 'center', valign: 'center'})
-    doc.fontSize(12).text('Reporte diario de administracion', 50, 70, {align: 'center'})
+    doc.fontSize(12).text('Reporte de extension', 50, 70, {align: 'center'})
     doc.text('facultad de Odontologia de la Universidad del Zulia', {align: 'center'})
-    doc.text(`Reporte del dia: ${date.getDate()}/${date.getMonth()+1}/${date.getFullYear()}`, {align: 'center'})
+    doc.text(`Reporte del mes: ${date.getMonth()+1}/${date.getFullYear()}`, {align: 'center'})
 
     doc.moveDown();
 
@@ -46,38 +25,48 @@ export function BuildReport(dataCallback, endCallback, invoiceList: Iinvoice[]){
     .stroke();
 
     doc.text(" ", 75, 150)
-    doc.text(`Total de facturas expedidas: ${invoiceList.length} facturas`)
-    doc.text(`Facturas exoneradas: ${facturasExoneradas.length} facturas`)
-    doc.text(`Facturas canceladas en dolares: ${facturasDolares.length} facturas`)
-    doc.text(`Facturas canceladas en bolivares: ${facturasBsEfectivo.length + facturasBsTranf.length} facturas`)
+    // doc.text(`Pagos registrados: ${totalDolares}$`)
+    doc.table({
+        data: [
+            ["Cedula", "Nombre", "Concepto", "Monto", "Tasa", "Fecha", "Metodo de pago"],
+            ...reporteDetalladoGeneral
+        ]
+    })
 
     doc.text(" ")
 
-    doc.text(`Ingreso total en dolares: ${totalDolares}$`)
-    doc.text(`Ingreso total en bolivares: ${totalBsEfectivo + totalBsTranf}Bs`)
-    doc.text(`Bolivares en efectivo: ${totalBsEfectivo}Bs`)
-    doc.text(`Bolivares en transferencia: ${totalBsTranf}Bs`)
+    // doc.text(`Ingreso total en bolivares: ${totalBsEfectivo + totalBsTranf}Bs`)
+    // doc.text(`Bolivares en efectivo: ${totalBsEfectivo}Bs`)
+    // doc.text(`Bolivares en transferencia: ${totalBsTranf}Bs`)
 
-    doc.text(" ")
+    // doc.text(" ")
 
 
-    doc.text(`Facturas para cirugia: ${facturasCirugia.length}`)
-    doc.text(`Facturas para endodoncia: ${facturasEndodoncia.length}`)
-    doc.text(`Facturas para ortodoncia: ${facturasOrtodoncia.length}`)
-    doc.text(`Facturas para peridoncia: ${facturasPeridoncia.length}`)
-    doc.text(`Facturas para protesis total: ${facturasProtesisTotal.length}`)
-    doc.text(`Facturas para protesis parcial removible: ${facturasProtesisParcialRemovible.length}`)
-    doc.text(`Facturas para protesis parcial fija: ${facturasProtesisParcialFija.length}`)
-    doc.text(`Facturas para CIA: ${facturasCia.length}`)
-    doc.text(`Facturas para CIAN: ${facturasCian.length}`)
-    doc.text(`Facturas para emergencia de CIA: ${facturasEmergenciaCia.length}`)
-    doc.text(`Facturas para emergencia de CIAN: ${facturasEmergenciaCian.length}`)
+    // doc.text(`Facturas para cirugia: ${facturasCirugia.length}`)
+    // doc.text(`Facturas para endodoncia: ${facturasEndodoncia.length}`)
+    // doc.text(`Facturas para ortodoncia: ${facturasOrtodoncia.length}`)
+    // doc.text(`Facturas para peridoncia: ${facturasPeridoncia.length}`)
+    // doc.text(`Facturas para protesis total: ${facturasProtesisTotal.length}`)
+    // doc.text(`Facturas para protesis parcial removible: ${facturasProtesisParcialRemovible.length}`)
+    // doc.text(`Facturas para protesis parcial fija: ${facturasProtesisParcialFija.length}`)
+    // doc.text(`Facturas para CIA: ${facturasCia.length}`)
+    // doc.text(`Facturas para CIAN: ${facturasCian.length}`)
+    // doc.text(`Facturas para emergencia de CIA: ${facturasEmergenciaCia.length}`)
+    // doc.text(`Facturas para emergencia de CIAN: ${facturasEmergenciaCian.length}`)
 
     doc.end()
 }
 
-function FacturasExoneradas(list: Iinvoice[]){
-    const result = list.filter(item => item.currency == "Exoneracion")
+function ReporteDetalladoGeneral(list){
+    const result = list.map(item => [
+        item.studentsidentification,
+        `${item.name} ${item.lastname}`,
+        item.billableitem,
+        item.chargedAmount,
+        item.changeRate,
+        item.date,
+        item.currencyReceived
+    ])
     return result;
 }
 

@@ -141,15 +141,15 @@ app.get('/api/getDailyReport', async (req, res) => {
 	try{
 
 		const currentDate = new Date
-		const roofLimit = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() + 1)
-		const floorLimit = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate())
+		const roofLimit = new Date(currentDate.getFullYear(), currentDate.getMonth()+1, 28)
+		const floorLimit = new Date(currentDate.getFullYear(), currentDate.getMonth()-1, currentDate.getDate())
 
 		const stream = res.writeHead(200, {
 			"Content-Type": "aplication/pdf",
 			"Content-Disposition": `attachment; filename=Reporte del ${floorLimit.toDateString()}.pdf`
 		})
 
-		const dbResponse = await db.getDailyReportInfo(floorLimit, roofLimit)
+		const dbResponse = await db.getReportInfo(floorLimit, roofLimit)
 		console.log(dbResponse)
 
 		res.status(200)

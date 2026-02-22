@@ -188,9 +188,25 @@ export async function getLogs(page: number) {
 	return res
 }
 
-export async function getDailyReportInfo(start: Date, end: Date){
+export async function getReportInfo(start: Date, end: Date){
 	const res = await query(`
-		SELECT * FROM invoices
+		SELECT 
+			s.id as studentId,
+			i.id as invoiceId,
+			i.status as invoiceStatus,
+			i.billableitem,
+			i.changeRate,
+			i.date,
+			i.chargedAmount,
+			i.currencyReceived,
+			i.amountReceived,
+			i.currencyReturned,
+			s.name,
+			s.lastname,
+			i.studentsidentification,
+		FROM invoices i
+		JOIN students s
+		ON s.id = i.StudentIdentification
 		WHERE date > ? AND date < ?
 	`, [start, end])
 	return res
@@ -209,7 +225,7 @@ export async function registerStudents(user: t.newStudent){
 		const instructionGrade = user.instructionGrade
 
 	const _res = await execute(`
-		INSERT INTO students(name, lastName, studentsId, birthDate, email, phone, address, instructionGrade)
+		INSERT INTO students(name, lastName, studentsidentification, birthDate, email, phone, address, instructionGrade)
 		VALUES(?, ?, ?, ?, ?, ?, ?, ?)	
 	`, [name, lastName, identification, birthDate, email, phone, address, instructionGrade])
 }
@@ -217,7 +233,7 @@ export async function registerStudents(user: t.newStudent){
 export async function getStudentById(id: number){
 	const res = await query(`
 		SELECT * FROM students
-		WHERE studentsId = ?
+		WHERE studentsidentification = ?
 	`, [id])
 	return res
 }
@@ -297,10 +313,10 @@ export async function getSearchedModule(description: string){
 
 export async function getEnrolledStudentsByModule(moduleId: number){
 	const res = await query(`
-		SELECT s.name, s.lastName, s.studentsId, s.email, s.phone, s.address, s.instructionGrade, e.dateEnrollments, e.state
+		SELECT s.name, s.lastName, s.studentsidentification, s.email, s.phone, s.address, s.instructionGrade, e.dateEnrollments, e.state
 		FROM enrollments e
 		JOIN enrollments_modules em ON e.id = em.enrollmentId
-		JOIN students s ON e.studentsId = s.id
+		JOIN students s ON e.studentsidentification = s.id
 		WHERE em.moduleId = ?
 	`, [moduleId])
 	return res
@@ -364,7 +380,7 @@ export async function filterStudents(param: string){
 		WHERE
 			name LIKE ?
 			OR lastname LIKE ?
-			OR 	studentsId LIKE ?
+			OR 	studentsidentification LIKE ?
 	`, [param, param, Number(param)])
 	return res;
 }
@@ -375,7 +391,7 @@ export async function filterTeachers(param: string){
 		WHERE
 			name LIKE ?
 			OR lastname LIKE ?
-			OR 	studentsId LIKE ?
+			OR 	studentsidentification LIKE ?
 	`, [param, param, Number(param)])
 	return res;
 }
