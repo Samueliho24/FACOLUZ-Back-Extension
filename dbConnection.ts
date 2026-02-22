@@ -203,11 +203,11 @@ export async function getReportInfo(start: Date, end: Date){
 			i.currencyReturned,
 			s.name,
 			s.lastname,
-			i.studentsidentification,
+			s.studentsidentification
 		FROM invoices i
 		JOIN students s
-		ON s.id = i.StudentIdentification
-		WHERE date > ? AND date < ?
+		ON s.studentsIdentification = i.StudentIdentification
+		WHERE i.date > ? AND i.date < ?
 	`, [start, end])
 	return res
 }

@@ -7,6 +7,10 @@ export function BuildReport(dataCallback, endCallback, invoiceList: Iinvoice[]){
 
     //Cantidades
     const reporteDetalladoGeneral = ReporteDetalladoGeneral(invoiceList)
+    const pagosPendientes = PagosPendientes(invoiceList)
+    const pagosCompletados = PagosCompletados(invoiceList)
+    const pagosEnDolares = PagosEnDolares(invoiceList)
+    const pagosEnBolivares = PagosEnBolivares(invoiceList)
 
     doc.on('data', dataCallback)
     doc.on('end', endCallback)
@@ -25,7 +29,7 @@ export function BuildReport(dataCallback, endCallback, invoiceList: Iinvoice[]){
     .stroke();
 
     doc.text(" ", 75, 150)
-    // doc.text(`Pagos registrados: ${totalDolares}$`)
+    doc.text(`Detalle de transacciones:`)
     doc.table({
         data: [
             ["Cedula", "Nombre", "Concepto", "Monto", "Tasa", "Fecha", "Metodo de pago"],
@@ -34,6 +38,48 @@ export function BuildReport(dataCallback, endCallback, invoiceList: Iinvoice[]){
     })
 
     doc.text(" ")
+
+    doc.text(`Pagos pendientes:`)
+    doc.table({
+        data: [
+            ["Cedula", "Nombre", "Concepto", "Monto", "Tasa", "Fecha", "Metodo de pago"],
+            ...pagosPendientes
+        ]
+    })
+
+    doc.text(" ")
+
+    doc.text(`Pagos completados:`)
+    doc.table({
+        data: [
+            ["Cedula", "Nombre", "Concepto", "Monto", "Tasa", "Fecha", "Metodo de pago"],
+            ...pagosCompletados
+        ]
+    })
+
+    doc.text(" ")
+
+    doc.text(`Transacciones canceladas en bolivares:`)
+    doc.table({
+        data: [
+            ["Cedula", "Nombre", "Concepto", "Monto", "Tasa", "Fecha", "Metodo de pago"],
+            ...pagosEnBolivares
+        ]
+    })
+
+    doc.text(" ")
+
+
+    doc.text(`Transacciones canceladas en dolares:`)
+    doc.table({
+        data: [
+            ["Cedula", "Nombre", "Concepto", "Monto", "Tasa", "Fecha", "Metodo de pago"],
+            ...pagosEnDolares
+        ]
+    })
+
+    doc.text(" ")
+
 
     // doc.text(`Ingreso total en bolivares: ${totalBsEfectivo + totalBsTranf}Bs`)
     // doc.text(`Bolivares en efectivo: ${totalBsEfectivo}Bs`)
@@ -64,7 +110,63 @@ function ReporteDetalladoGeneral(list){
         item.billableitem,
         item.chargedAmount,
         item.changeRate,
-        item.date,
+        item.date.toString(),
+        item.currencyReceived
+    ])
+    return result;
+}
+
+function PagosPendientes(list){
+    const filteredList = list.filter(item => item.status == "Pendiente")
+    const result = filteredList.map(item => [
+        item.studentsidentification,
+        `${item.name} ${item.lastname}`,
+        item.billableitem,
+        item.chargedAmount,
+        item.changeRate,
+        item.date.toString(),
+        item.currencyReceived
+    ])
+    return result;
+}
+
+function PagosCompletados(list){
+    const filteredList = list.filter(item => item.status == "Recibida")
+    const result = filteredList.map(item => [
+        item.studentsidentification,
+        `${item.name} ${item.lastname}`,
+        item.billableitem,
+        item.chargedAmount,
+        item.changeRate,
+        item.date.toString(),
+        item.currencyReceived
+    ])
+    return result;
+}
+
+function PagosEnDolares(list){
+    const filteredList = list.filter(item => item.currencyReceived == "Dolares en efectivo")
+    const result = filteredList.map(item => [
+        item.studentsidentification,
+        `${item.name} ${item.lastname}`,
+        item.billableitem,
+        item.chargedAmount,
+        item.changeRate,
+        item.date.toString(),
+        item.currencyReceived
+    ])
+    return result;
+}
+
+function PagosEnBolivares(list){
+    const filteredList = list.filter(item => item.currencyReceived == "Bolivares en efectivo" || item.currencyReceived == "Bolivares en transferencia")
+    const result = filteredList.map(item => [
+        item.studentsidentification,
+        `${item.name} ${item.lastname}`,
+        item.billableitem,
+        item.chargedAmount,
+        item.changeRate,
+        item.date.toString(),
         item.currencyReceived
     ])
     return result;
