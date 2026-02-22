@@ -1,5 +1,6 @@
 import PDFDocument from "pdfkit"
 import { Iinvoice } from '../types/invoice.ts' 
+import { mergeDate } from "../functions/formatDateTime.ts"
 
 export function BuildReport(dataCallback, endCallback, invoiceList: Iinvoice[]){
     const doc = new PDFDocument()
@@ -110,7 +111,7 @@ function ReporteDetalladoGeneral(list){
         item.billableitem,
         item.chargedAmount,
         item.changeRate,
-        item.date.toString(),
+        mergeDate(item.date),
         item.currencyReceived
     ])
     return result;
@@ -124,7 +125,7 @@ function PagosPendientes(list){
         item.billableitem,
         item.chargedAmount,
         item.changeRate,
-        item.date.toString(),
+        mergeDate(item.date),
         item.currencyReceived
     ])
     return result;
@@ -138,7 +139,7 @@ function PagosCompletados(list){
         item.billableitem,
         item.chargedAmount,
         item.changeRate,
-        item.date.toString(),
+        mergeDate(item.date),
         item.currencyReceived
     ])
     return result;
@@ -152,7 +153,7 @@ function PagosEnDolares(list){
         item.billableitem,
         item.chargedAmount,
         item.changeRate,
-        item.date.toString(),
+        mergeDate(item.date),
         item.currencyReceived
     ])
     return result;
@@ -166,7 +167,7 @@ function PagosEnBolivares(list){
         item.billableitem,
         item.chargedAmount,
         item.changeRate,
-        item.date.toString(),
+        mergeDate(item.date),
         item.currencyReceived
     ])
     return result;
