@@ -6,6 +6,7 @@ import * as tokenVerification from './tokenVerification.ts'
 import "jsr:@std/dotenv/load";
 import { BuildReport } from "./PdfModels/DailyReport.ts";
 import { randomUUID } from "node:crypto";
+import { buildCertificate } from "./PdfModels/certificate.ts"
 
 const port = Deno.env.get("PORT")
 const secret = Deno.env.get("SECRET")
@@ -410,11 +411,27 @@ app.get("/api/filterCourses/:param", tokenVerification.forAdmins, async(req, res
 	}
 })
 
-app.get("/api/certificate/:certificateId", tokenVerification.forAdmins, async(req, res) => {
+app.get("/api/certificate/:certificateId", async(req, res) => {
 	try{
-		
-	}catch(err){
+		const certificateId = req.params.certificateId;
+		const dbResponse = await db.getCertificateInfo(certificateId)
+		const fileTitle = `Certificado de ${dbResponse.course_name} a ${dbResponse.name} ${dbResponse.lastname}`
 
+		const stream = res.writeHead(200, {
+			"Content-Type": "aplication/pdf",
+			"Content-Disposition": `attachment; filename=${fileTitle}.pdf`
+		})
+
+		res.status(200)
+
+		buildCertificate(
+			(data) => stream.write(data),
+			() => stream.end(),
+			dbResponse
+		)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
 	}
 })
 

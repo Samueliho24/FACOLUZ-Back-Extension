@@ -19,7 +19,7 @@ export function BuildReport(dataCallback, endCallback, invoiceList: Iinvoice[]){
     doc.image('./assets/Logo_LUZ.png', 70, 50, {width: 60, align: 'center', valign: 'center'})
     doc.image('./assets/Logo_FacoLuz.png', 450, 60, {width: 110, align: 'center', valign: 'center'})
     doc.fontSize(12).text('Reporte de extension', 50, 70, {align: 'center'})
-    doc.text('facultad de Odontologia de la Universidad del Zulia', {align: 'center'})
+    doc.text('Facultad de Odontologia de la Universidad del Zulia', {align: 'center'})
     doc.text(`Reporte del mes: ${date.getMonth()+1}/${date.getFullYear()}`, {align: 'center'})
 
     doc.moveDown();

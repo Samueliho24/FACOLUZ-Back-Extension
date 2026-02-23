@@ -1,6 +1,8 @@
 export interface ICertificate {
-    certificateId: string,
+    certificate_id: string,
     name: string,
     lastname: string,
-    course: string
+    course_name: string,
+    date: Date,
+    studentsIdentification: number
 }
