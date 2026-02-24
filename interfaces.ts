@@ -4,14 +4,15 @@ export interface loginData{
 }
 
 export interface invoiceData{
-    patientId: number,
-    patientName: string,
-    patientPhone: string,
-    billableItem: number,
-    amount: number,
-    currency: number,
+    studentId: string,
+    billableitem: number,
+    chargedAmount: number,
+    currencyReceived: number,
+    amountReceived: number,
+    currencyReturned: number,
     reference: string,
-    changeRate: number
+    changeRate: number,
+    comment: string
 }
 
 export interface userData extends newUser{

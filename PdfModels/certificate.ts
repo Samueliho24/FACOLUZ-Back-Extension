@@ -1,6 +1,6 @@
-import PDFDocument from "pdfkit"
-import { ICertificate } from "../types/ICertificate.ts"
-import { mergeDate } from "../functions/formatDateTime.ts"
+import PDFDocument from "pdfkit";
+import { ICertificate } from "../types/ICertificate.ts";
+import { mergeDate } from "../functions/formatDateTime.ts";
 
 export function buildCertificate(dataCallback: any, endCallback: any, data: ICertificate) {
     // Configuración vertical (Portrait) según la imagen

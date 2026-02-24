@@ -106,18 +106,18 @@ export async function getSearchedPatient(idParam: number) {
 }
 
 export async function issueInvoice(data: t.invoiceData){
-	const {billableItem, currency, amount, reference, changeRate, patientId, patientName, patientPhone} = data
-	if (currency !== 2){
+	const {billableitem, chargedAmount, currencyReceived, amountReceived, currencyReturned, reference, changeRate, comment, studentId} = data
+	if (currencyReceived !== 2){
 		const res = await execute(`
-			INSERT INTO invoices(billableitem, currency, amount, reference, changeRate, patientId, patientName, patientPhone,status)
-			VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)	
-		`, [billableItem, currency, amount, reference, changeRate, patientId, patientName, patientPhone, 'Recibida'])
+			INSERT INTO invoices(billableitem, chargedAmount, currencyReceived, amountReceived, currencyReturned, reference, changeRate, comment, status, studentId)
+			VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)	
+		`, [billableitem, chargedAmount, currencyReceived, amountReceived, currencyReturned, reference, changeRate, comment, 'Recibida', studentId])
 		return res
 	}else{
 		const res = await execute(`
-			INSERT INTO invoices(billableitem, currency, amount, reference, changeRate, patientId, patientName, patientPhone)
-			VALUES(?, ?, ?, ?, ?, ?, ?, ?)	
-		`, [billableItem, currency, amount, reference, changeRate, patientId, patientName, patientPhone ])
+			INSERT INTO invoices(billableitem, chargedAmount, currencyReceived, amountReceived, currencyReturned, reference, changeRate, comment, studentId)
+			VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)	
+		`, [billableitem, chargedAmount, currencyReceived, amountReceived, currencyReturned, reference, changeRate, comment, studentId])
 		return res
 	}
 }
@@ -206,7 +206,7 @@ export async function getReportInfo(start: Date, end: Date){
 			s.studentsidentification
 		FROM invoices i
 		JOIN students s
-		ON s.studentsIdentification = i.StudentIdentification
+		ON s.id = i.studentId
 		WHERE i.date > ? AND i.date < ?
 	`, [start, end])
 	return res
@@ -233,7 +233,7 @@ export async function registerStudents(user: t.newStudent){
 export async function getStudentById(id: number){
 	const res = await query(`
 		SELECT * FROM students
-		WHERE studentsidentification = ?
+		WHERE studentsIdentification = ?
 	`, [id])
 	return res
 }
