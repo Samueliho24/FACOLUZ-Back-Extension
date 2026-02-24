@@ -414,7 +414,9 @@ app.get("/api/filterCourses/:param", tokenVerification.forAdmins, async(req, res
 app.get("/api/certificate/:certificateId", async(req, res) => {
 	try{
 		const certificateId = req.params.certificateId;
+		console.log(req.params)
 		const dbResponse = await db.getCertificateInfo(certificateId)
+		console.log(dbResponse)
 		const fileTitle = `Certificado de ${dbResponse.course_name} a ${dbResponse.name} ${dbResponse.lastname}`
 
 		const stream = res.writeHead(200, {
@@ -429,6 +431,17 @@ app.get("/api/certificate/:certificateId", async(req, res) => {
 			() => stream.end(),
 			dbResponse
 		)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.get("/api/certificateList/", async(req, res) => {
+	try{
+		// const page = req.params.page;
+		const dbResponse = await db.getCertificateList();
+		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
 		res.status(500).send(err)
