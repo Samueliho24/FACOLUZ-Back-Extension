@@ -288,6 +288,17 @@ app.get('/api/getAllModules', tokenVerification.forAdmins, async (req, res) => {
 	}
 })
 
+app.post('/api/deactivateModule', tokenVerification.forAdmins, async (req, res) => {
+	const { moduleId } = req.body
+	try{
+		await db.deactivateModule(moduleId)
+		res.status(200).send({ message: 'Módulo suspendido' })
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
 app.get('/api/getSearchedModule/:idParam', tokenVerification.forAdmins, async (req, res) => {
 	const idParam = req.params.idParam
 	try{
@@ -310,17 +321,6 @@ app.get('/api/getEnrolledStudentsByModule/:idParam', tokenVerification.forAdmins
 	}
 })
 
-app.post('/api/assignModuleToCourse', tokenVerification.forAdmins, async (req, res) => {
-	const {moduleId, courseId} = req.body
-	try{
-		const _dbResponse = await db.assignModuleToCourse(courseId, moduleId)
-		res.status(200).send()
-	}catch(err){
-		console.log(err)
-		res.status(500).send(err)
-	}
-})
-
 app.post('/api/getAssignedModules', tokenVerification.forAdmins, async (req, res) => {
 	const {courseId} = req.body
 	try{
@@ -330,6 +330,17 @@ app.post('/api/getAssignedModules', tokenVerification.forAdmins, async (req, res
 		console.log(err)
 		res.status(500).send(err)
 	}
+})
+
+app.post('/api/updateAssignedModules', tokenVerification.forAdmins, async (req, res) => {
+    const { courseId, moduleIds } = req.body
+    try{
+        await db.updateAssignedModulesForCourse(courseId, moduleIds)
+        res.status(200).send({ message: 'Modules updated' })
+    }catch(err){
+        console.log(err)
+        res.status(500).send(err)
+    }
 })
 
 app.post('/api/registerEnrollment', tokenVerification.forAdmins, async (req, res) => {

@@ -299,15 +299,16 @@ export async function setCourse(description: string){
 }
 
 export async function getAllModules(){
-	const res = await query(`SELECT * FROM modules`)
+	const res = await query(`SELECT * FROM modules WHERE state = 'Activo' ORDER BY description ASC`)
 	return res
 }
 
 export async function getSearchedModule(description: string){
 	const res = await query(`
 		SELECT * FROM modules
-		WHERE description LIKE ?
-	`, [`%${description}%`])
+		WHERE description LIKE ? AND state = 'Activo'
+		ORDER BY description ASC
+	`, [`${description}%`])
 	return res
 }
 
@@ -330,12 +331,11 @@ export async function setModule(description: string){
 	`, [description])
 }
 
-export async function assignModuleToCourse(courseId: string, moduleId: string){
-	const _res = await execute(`
-		INSERT INTO modules_courses(moduleid, courseid)
-		VALUES(?, ?)	
-	`, [moduleId, courseId])
+export async function deactivateModule(moduleId: string){
+    const res = await execute(`UPDATE modules SET state = 'Inactivo' WHERE id = ?`, [moduleId])
+    return res
 }
+
 
 export async function getAssignedModulesByCourse(courseId: string){
 	const res = await query(`
@@ -343,6 +343,26 @@ export async function getAssignedModulesByCourse(courseId: string){
 		WHERE courseid = ?
 	`, [courseId])
 	return res
+}
+
+export async function updateAssignedModulesForCourse(courseId: string, moduleIds: (string|number)[]){
+	// Remove existing assignments for the course and insert the provided ones in a single operation
+	try{
+		// Delete existing
+		await execute(`DELETE FROM modules_courses WHERE courseid = ?`, [courseId])
+		if (moduleIds && moduleIds.length > 0){
+			const placeholders = moduleIds.map(() => '(?, ?)').join(', ')
+			const params: any[] = []
+			moduleIds.forEach((m) => {
+				params.push(m)
+				params.push(courseId)
+			})
+			await execute(`INSERT INTO modules_courses(moduleid, courseid) VALUES ${placeholders}`, params)
+		}
+	}catch(err){
+		console.log(err)
+		throw err
+	}
 }
 
 //Registro de inscripcion modulos
@@ -375,13 +395,14 @@ export async function updateEnrollmentState(enrollmentId: string, newState: stri
 //Fin de querys para inscripcion
 
 export async function filterStudents(param: string){
+	const q = `${param}%`
 	const res = await query(`
 		SELECT * FROM students
 		WHERE
 			name LIKE ?
 			OR lastname LIKE ?
-			OR 	studentsidentification LIKE ?
-	`, [param, param, Number(param)])
+			OR CAST(studentsidentification AS CHAR) LIKE ?
+	`, [q, q, q])
 	return res;
 }
 
