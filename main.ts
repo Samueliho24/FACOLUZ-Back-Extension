@@ -3,6 +3,7 @@ import cors from 'npm:cors'
 import jwt from 'npm:jsonwebtoken'
 import * as tokenVerification from './tokenVerification.ts'
 import "jsr:@std/dotenv/load";
+import * as t from "./interfaces.ts"
 import { BuildReport } from "./PdfModels/DailyReport.ts";
 import { buildCertificate } from "./PdfModels/certificate.ts"
 import { login } from "./dbConnection/system.ts";
@@ -448,9 +449,30 @@ app.get("/api/certificate/:certificateId", async(req, res) => {
 
 app.get("/api/certificateList/", async(req, res) => {
 	try{
-		// const page = req.params.page;
 		const dbResponse = await getCertificateList();
 		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.get("/api/payments/:invoiceId", async(req, res) => {
+	try{
+		const invoiceId = req.params.invoiceId
+		const dbResponse = await getPaymentsByInvoice(invoiceId);
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.post("/api/payments", async(req, res) => {
+	try{
+		const data: t.IPayment = req.body
+		const _dbResponse = await makePayment(data)
+		res.status(201).send()
 	}catch(err){
 		console.log(err)
 		res.status(500).send(err)
