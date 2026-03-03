@@ -37,3 +37,14 @@ export interface newPeriod{
     startDate: Date,
     endDate: Date
 }
+
+export interface IPayment{
+    invoiceId: string,
+    receivedPaymentMethod: string,
+    returnedPaymentMethod: string,
+    paidAmount: number,
+    returnedAmount: number,
+    reference?: string,
+    comments?: string,
+    changeRate: number
+}
