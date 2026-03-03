@@ -1,12 +1,21 @@
 import express from "npm:express@4.18.2";
 import cors from 'npm:cors'
 import jwt from 'npm:jsonwebtoken'
-import * as db from './dbConnection.ts'
 import * as tokenVerification from './tokenVerification.ts'
 import "jsr:@std/dotenv/load";
 import { BuildReport } from "./PdfModels/DailyReport.ts";
-import { randomUUID } from "node:crypto";
 import { buildCertificate } from "./PdfModels/certificate.ts"
+import { login } from "./dbConnection/system.ts";
+import { getCertificateInfo, getCertificateList } from "./dbConnection/certificates.ts"
+import { filterCourses, getAllCourses, setCourse, updateAssignedModulesForCourse } from "./dbConnection/courses.ts"
+import { registerEnrollment, updateEnrollmentState } from "./dbConnection/enrollments.ts"
+import { getAllinvoices, getCurrentDayInvoices, getIdInvoice, getInvoicesById, getInvoicesByPayer, getinvoicesVerification, getinvoicesVerificationById, issueInvoice, verifyInvoice } from "./dbConnection/invoices.ts"
+import { deactivateModule, filterModules, getAllModules, getAssignedModulesByCourse, getSearchedModule, setModule } from "./dbConnection/modules.ts"
+import { getPaymentsByInvoice, makePayment } from "./dbConnection/payments.ts"
+import { changeEndDatePeriod, closePeriod, getCurrentPeriod, openPeriods } from "./dbConnection/period.ts"
+import { getReportInfo } from "./dbConnection/reports.ts"
+import { filterStudents, getEnrolledStudentsByModule, getStudentById, getStudents, registerStudents } from "./dbConnection/students.ts"
+import { filterTeachers } from "./dbConnection/teachers.ts"
 
 const port = Deno.env.get("PORT")
 const secret = Deno.env.get("SECRET")
@@ -21,7 +30,7 @@ app.post('/api/login', async (req, res) => {
 	console.log(req.body)
 	let dbResponse
 	try{
-		dbResponse = await db.login(req.body)
+		dbResponse = await login(req.body)
 		if(dbResponse.length == 0){
 			res.status(404).send('Usuario no encontrado')
 		}else if(dbResponse[0].passwordSHA256 != passwordHash){
@@ -47,7 +56,7 @@ app.post('/api/login', async (req, res) => {
 //Obtener el numero de Factura a emitir
 app.get('/api/getIdInvoice', tokenVerification.forAdmins, async (req, res) => {
 	try{
-		const dbResponse = await db.getIdInvoice()
+		const dbResponse = await getIdInvoice()
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
@@ -59,7 +68,7 @@ app.post('/api/issueInvoice', tokenVerification.forAdmins, async (req, res) => {
 	const token = req.headers.authorization.split(" ")[1]
 	const payload = jwt.verify(token, secret)
 	try {
-		const dbResponse = await db.issueInvoice(req.body)
+		const dbResponse = await issueInvoice(req.body)
 		console.log(dbResponse)
 		res.status(200).send("Factura creada exitosamente")
 	} catch (err) {
@@ -68,22 +77,11 @@ app.post('/api/issueInvoice', tokenVerification.forAdmins, async (req, res) => {
 	}
 })
 
-//Modificar para verificar si un pagador ya existe
-app.get('/api/getSearchedPatient/:idParam', tokenVerification.forSysAdmins, async (req, res) => {
-	const idParam = req.params.idParam
-	try {
-		const dbResponse = await db.getSearchedPatient(idParam)
-		res.status(200).send(dbResponse)
-	} catch (err) {
-		console.log(err)
-		res.status(404).send('Paciente no encontrado')
-	}
-})
 //Obtener facturas por verificar
 app.get('/api/getinvoicesVerification/:page', tokenVerification.forAdmins, async (req, res) => {
 	const page = Number(req.params.page)
 	try{
-		const dbResponse = await db.getinvoicesVerification(page)
+		const dbResponse = await getinvoicesVerification(page)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
@@ -95,7 +93,7 @@ app.get('/api/getInvoicesVerificationById/:patientId/:page', tokenVerification.f
 	const patientId = req.params.patientId
 	const page = Number(req.params.page)
 	try{
-		const dbResponse = await db.getinvoicesVerificationById(patientId, page)
+		const dbResponse = await getinvoicesVerificationById(patientId, page)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
@@ -106,7 +104,7 @@ app.get('/api/getInvoicesVerificationById/:patientId/:page', tokenVerification.f
 app.post('/api/verifyInvoice', tokenVerification.forAdmins, async (req, res) => {
 	const {idParam, status} = req.body
 	try{
-		const dbResponse = await db.verifyInvoice(idParam, status)
+		const dbResponse = await verifyInvoice(idParam, status)
 		res.status(200).send('La factura ha sido verificada con exitosamente')
 	}catch(err){
 		console.log(err)
@@ -119,7 +117,7 @@ app.get('/api/getInvoices/:patientId/:page', tokenVerification.forAdmins, async 
 	const patientId = req.params.patientId
 	const page = Number(req.params.page)
 	try{
-		const dbResponse = await db.getInvoicesById(patientId, page)
+		const dbResponse = await getInvoicesById(patientId, page)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
@@ -130,7 +128,7 @@ app.get('/api/getInvoices/:patientId/:page', tokenVerification.forAdmins, async 
 app.get('/api/getInvoices/:page', tokenVerification.forAdmins, async (req, res) => {
 	const page = Number(req.params.page)
 	try{
-		const dbResponse = await db.getAllinvoices(page)
+		const dbResponse = await getAllinvoices(page)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
@@ -150,7 +148,7 @@ app.get('/api/getDailyReport', async (req, res) => {
 			"Content-Disposition": `attachment; filename=Reporte del ${floorLimit.toDateString()}.pdf`
 		})
 
-		const dbResponse = await db.getReportInfo(floorLimit, roofLimit)
+		const dbResponse = await getReportInfo(floorLimit, roofLimit)
 		console.log(dbResponse)
 
 		res.status(200)
@@ -170,7 +168,7 @@ app.get('/api/getDailyReport', async (req, res) => {
 
 app.post('/api/registerStudents', tokenVerification.forAdmins, async (req, res) => {
 	try{
-		const _dbResponse = await db.registerStudents(req.body)
+		const _dbResponse = await registerStudents(req.body)
 		res.status(200).send()
 	}catch(err){
 		console.log(err)
@@ -181,7 +179,7 @@ app.post('/api/registerStudents', tokenVerification.forAdmins, async (req, res) 
 app.get('/api/getStudentById/:id', tokenVerification.forAdmins,  async (req, res) => {
 	const id = Number(req.params.id)
 	try{
-		const dbResponse = await db.getStudentById(id)
+		const dbResponse = await getStudentById(id)
 		if(dbResponse.length == 0){
 			res.status(404).send('Estudiante no encontrado')
 			return
@@ -196,7 +194,7 @@ app.get('/api/getStudentById/:id', tokenVerification.forAdmins,  async (req, res
 app.get('/api/getStudents/:page', tokenVerification.forAdmins, async (req, res) => {
 	const page = Number(req.params.page)
 	try{
-		const dbResponse = await db.getStudents(page)
+		const dbResponse = await getStudents(page)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
@@ -206,7 +204,7 @@ app.get('/api/getStudents/:page', tokenVerification.forAdmins, async (req, res) 
 
 app.post('/api/openPeriods', tokenVerification.forAdmins, async (req, res) => {
 	try{
-		const dbResponse = await db.openPeriods(req.body)
+		const dbResponse = await openPeriods(req.body)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
@@ -216,7 +214,7 @@ app.post('/api/openPeriods', tokenVerification.forAdmins, async (req, res) => {
 
 app.get('/api/getCurrentPeriod', tokenVerification.forAdmins, async (req, res) => {
 	try{
-		const dbResponse = await db.getCurrentPeriod()
+		const dbResponse = await getCurrentPeriod()
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
@@ -227,7 +225,7 @@ app.get('/api/getCurrentPeriod', tokenVerification.forAdmins, async (req, res) =
 app.patch('/api/changeEndDatePeriod', tokenVerification.forAdmins, async (req, res) => {
 	const {year, periodId, newEndDate} = req.body
 	try{
-		const dbResponse = await db.changeEndDatePeriod(year, periodId, newEndDate)
+		const dbResponse = await changeEndDatePeriod(year, periodId, newEndDate)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
@@ -238,7 +236,7 @@ app.patch('/api/changeEndDatePeriod', tokenVerification.forAdmins, async (req, r
 app.post('/api/closePeriod', tokenVerification.forAdmins, async (req, res) => {
 	const {year, periodId} = req.body
 	try{
-		const dbResponse = await db.closePeriod(year, periodId)
+		const dbResponse = await closePeriod(year, periodId)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
@@ -249,7 +247,7 @@ app.post('/api/closePeriod', tokenVerification.forAdmins, async (req, res) => {
 app.post('/api/course', tokenVerification.forAdmins, async (req, res) => {
 	const {description} = req.body
 	try{
-		const _dbResponse = await db.setCourse(description)
+		const _dbResponse = await setCourse(description)
 		res.status(200).send()	
 	}catch(err){
 		console.log(err)
@@ -260,7 +258,7 @@ app.post('/api/course', tokenVerification.forAdmins, async (req, res) => {
 app.post('/api/module', tokenVerification.forAdmins, async (req, res) => {
 	const {description} = req.body
 	try{
-		const _dbResponse = await db.setModule(description)
+		const _dbResponse = await setModule(description)
 		res.status(200).send()		
 	}catch(err){
 		console.log(err)
@@ -270,7 +268,7 @@ app.post('/api/module', tokenVerification.forAdmins, async (req, res) => {
 
 app.get('/api/course', tokenVerification.forAdmins, async (req, res) => {
 	try{
-		const dbResponse = await db.getAllCourses()
+		const dbResponse = await getAllCourses()
 		res.status(200).send(dbResponse)	
 	}catch(err){
 		console.log(err)
@@ -280,7 +278,7 @@ app.get('/api/course', tokenVerification.forAdmins, async (req, res) => {
 
 app.get('/api/getAllModules', tokenVerification.forAdmins, async (req, res) => {
 	try{
-		const dbResponse = await db.getAllModules()
+		const dbResponse = await getAllModules()
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
@@ -291,7 +289,7 @@ app.get('/api/getAllModules', tokenVerification.forAdmins, async (req, res) => {
 app.post('/api/deactivateModule', tokenVerification.forAdmins, async (req, res) => {
 	const { moduleId } = req.body
 	try{
-		await db.deactivateModule(moduleId)
+		await deactivateModule(moduleId)
 		res.status(200).send({ message: 'Módulo suspendido' })
 	}catch(err){
 		console.log(err)
@@ -302,7 +300,7 @@ app.post('/api/deactivateModule', tokenVerification.forAdmins, async (req, res) 
 app.get('/api/getSearchedModule/:idParam', tokenVerification.forAdmins, async (req, res) => {
 	const idParam = req.params.idParam
 	try{
-		const dbResponse = await db.getSearchedModule(idParam)
+		const dbResponse = await getSearchedModule(idParam)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)		
@@ -313,7 +311,7 @@ app.get('/api/getSearchedModule/:idParam', tokenVerification.forAdmins, async (r
 app.get('/api/getEnrolledStudentsByModule/:idParam', tokenVerification.forAdmins, async (req, res) => {
 	const idParam = req.params.idParam
 	try{
-		const dbResponse = await db.getEnrolledStudentsByModule(idParam)
+		const dbResponse = await getEnrolledStudentsByModule(idParam)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
@@ -324,7 +322,7 @@ app.get('/api/getEnrolledStudentsByModule/:idParam', tokenVerification.forAdmins
 app.post('/api/getAssignedModules', tokenVerification.forAdmins, async (req, res) => {
 	const {courseId} = req.body
 	try{
-		const dbResponse = await db.getAssignedModulesByCourse(courseId)
+		const dbResponse = await getAssignedModulesByCourse(courseId)
 		res.status(200).send(dbResponse)		
 	}catch(err){
 		console.log(err)
@@ -335,7 +333,7 @@ app.post('/api/getAssignedModules', tokenVerification.forAdmins, async (req, res
 app.post('/api/updateAssignedModules', tokenVerification.forAdmins, async (req, res) => {
     const { courseId, moduleIds } = req.body
     try{
-        await db.updateAssignedModulesForCourse(courseId, moduleIds)
+        await updateAssignedModulesForCourse(courseId, moduleIds)
         res.status(200).send({ message: 'Modules updated' })
     }catch(err){
         console.log(err)
@@ -346,7 +344,7 @@ app.post('/api/updateAssignedModules', tokenVerification.forAdmins, async (req, 
 app.post('/api/registerEnrollment', tokenVerification.forAdmins, async (req, res) => {
 	const {studentId, periodId, moduleIds, state} = req.body
 	try{
-		const dbResponse = await db.registerEnrollment(studentId, periodId, moduleIds, state)
+		const dbResponse = await registerEnrollment(studentId, periodId, moduleIds, state)
 		res.status(200).send(dbResponse)		
 	}catch(err){
 		console.log(err)
@@ -357,7 +355,7 @@ app.post('/api/registerEnrollment', tokenVerification.forAdmins, async (req, res
 app.patch('/api/updateEnrollmentState', tokenVerification.forAdmins, async (req, res) => {
 	const {enrollmentId, newState} = req.body
 	try{
-		const dbResponse = await db.updateEnrollmentState(enrollmentId, newState)
+		const dbResponse = await updateEnrollmentState(enrollmentId, newState)
 		res.status(200).send(dbResponse)		
 	}catch(err){
 		console.log(err)
@@ -370,7 +368,7 @@ app.patch('/api/updateEnrollmentState', tokenVerification.forAdmins, async (req,
 //Endpoint para obtener configuraciones
 // app.get('/api/getSettings', tokenVerification.forAdmins, async (req, res) => {
 // 	try{
-// 		const dbResponse = await db.getSettings()
+// 		const dbResponse = await getSettings()
 // 		res.status(200).send(dbResponse)
 // 	}catch(err){
 // 		console.log(err)
@@ -381,7 +379,7 @@ app.patch('/api/updateEnrollmentState', tokenVerification.forAdmins, async (req,
 app.get("/api/filterStudents/:param", tokenVerification.forAdmins, async(req, res) => {
 	try{
 		const { param } = req.params;
-		const dbResponse = await db.filterStudents(param)
+		const dbResponse = await filterStudents(param)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
@@ -392,7 +390,7 @@ app.get("/api/filterStudents/:param", tokenVerification.forAdmins, async(req, re
 app.get("/api/filterTeachers/:param", tokenVerification.forAdmins, async(req, res) => {
 	try{
 		const { param } = req.params;
-		const dbResponse = await db.filterTeachers(param)
+		const dbResponse = await filterTeachers(param)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
@@ -403,7 +401,7 @@ app.get("/api/filterTeachers/:param", tokenVerification.forAdmins, async(req, re
 app.get("/api/filterModules/:param", tokenVerification.forAdmins, async(req, res) => {
 	try{
 		const { param } = req.params;
-		const dbResponse = await db.filterModules(param)
+		const dbResponse = await filterModules(param)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
@@ -414,7 +412,7 @@ app.get("/api/filterModules/:param", tokenVerification.forAdmins, async(req, res
 app.get("/api/filterCourses/:param", tokenVerification.forAdmins, async(req, res) => {
 	try{
 		const { param } = req.params;
-		const dbResponse = await db.filterCourses(param)
+		const dbResponse = await filterCourses(param)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
@@ -426,7 +424,7 @@ app.get("/api/certificate/:certificateId", async(req, res) => {
 	try{
 		const certificateId = req.params.certificateId;
 		console.log(req.params)
-		const dbResponse = await db.getCertificateInfo(certificateId)
+		const dbResponse = await getCertificateInfo(certificateId)
 		console.log(dbResponse)
 		const fileTitle = `Certificado de ${dbResponse.course_name} a ${dbResponse.name} ${dbResponse.lastname}`
 
@@ -451,7 +449,7 @@ app.get("/api/certificate/:certificateId", async(req, res) => {
 app.get("/api/certificateList/", async(req, res) => {
 	try{
 		// const page = req.params.page;
-		const dbResponse = await db.getCertificateList();
+		const dbResponse = await getCertificateList();
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
