@@ -28,7 +28,6 @@ app.use(express.urlencoded({extended: true}))
 
 app.post('/api/login', async (req, res) => {
 	const {passwordHash} = req.body
-	console.log(req.body)
 	let dbResponse
 	try{
 		dbResponse = await login(req.body)
@@ -70,8 +69,11 @@ app.post('/api/issueInvoice', tokenVerification.forAdmins, async (req, res) => {
 	const payload = jwt.verify(token, secret)
 	try {
 		const dbResponse = await issueInvoice(req.body)
-		console.log(dbResponse)
-		res.status(200).send("Factura creada exitosamente")
+		if(dbResponse === true){
+			res.status(200).send("Factura creada exitosamente")
+		}else{
+			res.status(404).send("No se ah encontrado al estudiante")
+		}
 	} catch (err) {
 		console.log(err)
 		res.status(500).send('Error del servidor')

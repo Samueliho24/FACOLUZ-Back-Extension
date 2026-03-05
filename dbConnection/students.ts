@@ -54,3 +54,16 @@ export async function getEnrolledStudentsByModule(moduleId: number){
 	`, [moduleId])
 	return res
 }
+
+export async function studentExist(studentIdentification: number){
+    console.log(studentIdentification)
+    const res = await query(`
+        SELECT id FROM students WHERE studentsIdentification = ?    
+    `, [studentIdentification])
+
+    if (res.length > 0){
+        return true
+    } else{
+        return false
+    }
+}

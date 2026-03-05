@@ -4,14 +4,10 @@ export interface loginData{
 }
 
 export interface invoiceData{
-    studentId: string,
+    studentIdentification: number,
     billableitem: number,
+    quantity: number,
     chargedAmount: number,
-    currencyReceived: number,
-    amountReceived: number,
-    currencyReturned: number,
-    reference: string,
-    changeRate: number,
     comment: string
 }
 

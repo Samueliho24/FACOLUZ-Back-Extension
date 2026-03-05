@@ -1,4 +1,6 @@
 import { query, execute } from "../dbConnection.ts"
+import * as t from "../interfaces.ts"
+import { studentExist } from "./students.ts";
 
 //Obtener el ID de la siguiente factura a emitir (probar si este enfoque funciona correctamente)
 export async function getIdInvoice(){
@@ -55,19 +57,26 @@ export async function verifyInvoice(idParam: number, status: string,){
 }
 
 export async function issueInvoice(data: t.invoiceData){
-    const {billableitem, chargedAmount, currencyReceived, amountReceived, currencyReturned, reference, changeRate, comment, studentId} = data
-    if (currencyReceived !== 2){
-        const res = await execute(`
-            INSERT INTO invoices(billableitem, chargedAmount, currencyReceived, amountReceived, currencyReturned, reference, changeRate, comment, status, studentId)
-            VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)	
-        `, [billableitem, chargedAmount, currencyReceived, amountReceived, currencyReturned, reference, changeRate, comment, 'Recibida', studentId])
-        return res
+    const {studentIdentification, billableitem, quantity, chargedAmount, comment } = data
+    if (await studentExist(studentIdentification)){
+        const _res = await execute(`
+            INSERT INTO invoices(
+                StudentIdentification,
+                billableItem,
+                quantity,
+                chargedAmount,
+                comments
+            ) VALUES (?, ?, ?, ?, ?)    
+        `, [
+            studentIdentification,
+            billableitem,
+            quantity,
+            chargedAmount,
+            comment
+        ])
+        return true
     }else{
-        const res = await execute(`
-            INSERT INTO invoices(billableitem, chargedAmount, currencyReceived, amountReceived, currencyReturned, reference, changeRate, comment, studentId)
-            VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)	
-        `, [billableitem, chargedAmount, currencyReceived, amountReceived, currencyReturned, reference, changeRate, comment, studentId])
-        return res
+        return false
     }
 }
 
