@@ -19,7 +19,7 @@ import { filterStudents, getEnrolledStudentsByModule, getStudentById, getStudent
 import { filterTeachers } from "./dbConnection/teachers.ts"
 
 const port = Deno.env.get("PORT")
-const secret = Deno.env.get("SECRET")
+export const secret = Deno.env.get("SECRET")
 
 const app = express()
 app.use(cors())
@@ -42,7 +42,7 @@ app.post('/api/login', async (req, res) => {
 				id: dbResponse[0].id,
 				name: dbResponse[0].name,
 				type: dbResponse[0].type,
-				exp: Date.now() + 600000
+				exp: Math.floor(Date.now() / 1000) + 600
 			}, secret)
 			console.log({...dbResponse[0], jwt: token})
 			res.status(200).send({...dbResponse[0], jwt: token})

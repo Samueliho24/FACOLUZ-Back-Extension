@@ -1,6 +1,5 @@
 import jwt from 'npm:jsonwebtoken'
-const secret = Deno.env.get("SECRET")
-
+import { secret } from "./main.ts"
 
 export function forTeachOrStud(req, res, next){
 	try{
@@ -64,15 +63,20 @@ export function forStudyControl(req, res, next){
 }
 
 export function forAdmins(req, res, next){
+	console.log(secret)
 	try{
 		const token = req.headers.authorization.split(" ")[1]
 		const payload = jwt.verify(token, secret)
-		if(Date().now > payload.exp){
+		console.log(payload)
+		console.log(Date.now())
+		console.log(Date.now() - payload.exp)
+		if(Math.floor(Date.now() / 1000) > payload.exp){
 			res.status(401).send('Sesion expirada')
 		}else{
 			next()
 		}
 	}catch(err){
+		console.log(err)
 		return res.status(401).send('Token no válido');
 	}
 }
