@@ -11,10 +11,6 @@ export interface invoiceData{
     comment: string
 }
 
-export interface userData extends newUser{
-    uid: string
-}
-
 export interface newStudent{
     name: string,
     lastName: string,
@@ -35,11 +31,11 @@ export interface newPeriod{
 }
 
 export interface IPayment{
-    invoiceId: string,
-    receivedPaymentMethod: string,
-    returnedPaymentMethod: string,
-    paidAmount: number,
-    returnedAmount: number,
+    InvoiceId: string,
+    paymentAmmount: number,
+    paymentMethod: string,
+    changeAmount: number,
+    changeMethod: string,
     reference?: string,
     comments?: string,
     changeRate: number

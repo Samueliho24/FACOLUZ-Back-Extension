@@ -22,6 +22,7 @@ export async function getInvoicesById(patientId: string, page: number){
 export async function getAllinvoices(page: number){	
     const res = await query(`
         SELECT 
+            i.id,
             i.chargedAmount,
             i.date,
             i.status,

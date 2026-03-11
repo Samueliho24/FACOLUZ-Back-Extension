@@ -22,11 +22,11 @@ export const makePayment = async(data: t.IPayment) => {
             comments
         ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)    
     `, [
-        data.invoiceId,
-        data.paidAmount,
-        data.receivedPaymentMethod,
-        data.returnedAmount,
-        data.returnedPaymentMethod,
+        data.InvoiceId,
+        data.paymentAmmount,
+        data.paymentMethod,
+        data.changeAmount,
+        data.changeMethod,
         data.changeRate,
         (data.reference ? data.reference : null),
         (data.comments ? data.comments : null),
@@ -34,11 +34,11 @@ export const makePayment = async(data: t.IPayment) => {
 
     const remainingAmount = await query(`
         SELECT chargedAmount FROM invoices WHERE id = ?    
-    `, [data.invoiceId])
+    `, [data.InvoiceId])
 
     const paymentsList = await query(`
         SELECT paidAmount FROM payments WHERE invoiceId = ?    
-    `, [data.invoiceId])
+    `, [data.InvoiceId])
 
     let totalPaid = 0;
     paymentsList.forEach((element: any) => {
@@ -48,6 +48,6 @@ export const makePayment = async(data: t.IPayment) => {
     if(totalPaid >= remainingAmount[0].chargedAmount){
         const _res1 = await execute(`
             UPDATE invoices SET status = Pagado WHERE id = ?
-        `, [data.invoiceId])
+        `, [data.InvoiceId])
     }
 }
