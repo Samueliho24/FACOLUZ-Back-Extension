@@ -10,6 +10,9 @@ export const getPaymentsByInvoice = async(invoiceId: string) => {
 
 //Realizar el abono correspondiente y luego revisar si la deuda esta saldada
 export const makePayment = async(data: t.IPayment) => {
+    if(data.paymentMethod == 1 || data.paymentMethod == 2){
+        data.paymentAmmount = Number((data.paymentAmmount / data.changeRate).toFixed(2))
+    }
     const _res0 = await execute(`
         INSERT INTO payments(
             invoiceId,
@@ -47,7 +50,7 @@ export const makePayment = async(data: t.IPayment) => {
 
     if(totalPaid >= remainingAmount[0].chargedAmount){
         const _res1 = await execute(`
-            UPDATE invoices SET status = Pagado WHERE id = ?
+            UPDATE invoices SET status = 'Pagado' WHERE id = ?
         `, [data.InvoiceId])
     }
 }

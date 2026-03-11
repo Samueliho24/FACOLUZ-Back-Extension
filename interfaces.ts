@@ -33,9 +33,9 @@ export interface newPeriod{
 export interface IPayment{
     InvoiceId: string,
     paymentAmmount: number,
-    paymentMethod: string,
+    paymentMethod: number,
     changeAmount: number,
-    changeMethod: string,
+    changeMethod: number,
     reference?: string,
     comments?: string,
     changeRate: number
