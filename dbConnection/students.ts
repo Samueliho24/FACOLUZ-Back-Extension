@@ -46,10 +46,19 @@ export async function getStudents(page: number){
 
 export async function getEnrolledStudentsByModule(moduleId: number){
 	const res = await query(`
-		SELECT s.name, s.lastName, s.studentsidentification, s.email, s.phone, s.address, s.instructionGrade, e.dateEnrollments, e.state
+		SELECT 
+            s.name,
+            s.lastName,
+            s.studentsIdentification,
+            s.email,
+            s.phone,
+            s.address,
+            s.instructionGrade,
+            e.dateEnrollments,
+            e.state
 		FROM enrollments e
 		JOIN enrollments_modules em ON e.id = em.enrollmentId
-		JOIN students s ON e.studentsidentification = s.id
+		JOIN students s ON e.studentId = s.id
 		WHERE em.moduleId = ?
 	`, [moduleId])
 	return res

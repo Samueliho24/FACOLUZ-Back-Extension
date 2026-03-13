@@ -63,13 +63,9 @@ export function forStudyControl(req, res, next){
 }
 
 export function forAdmins(req, res, next){
-	console.log(secret)
 	try{
 		const token = req.headers.authorization.split(" ")[1]
 		const payload = jwt.verify(token, secret)
-		console.log(payload)
-		console.log(Date.now())
-		console.log(Date.now() - payload.exp)
 		if(Math.floor(Date.now() / 1000) > payload.exp){
 			res.status(401).send('Sesion expirada')
 		}else{
