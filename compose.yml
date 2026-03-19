@@ -1,0 +1,54 @@
+services:
+  api:
+    image: api 
+    build: 
+      dockerfile: Dockerfile
+      context: .
+      tags:
+        - api
+    networks:
+      extension: 
+        ipv4_address: 172.16.0.2
+    ports: 
+      - 3006:3006
+    restart: always
+    environment:
+      PORT: 3006
+      # Escribir secreto para encriptar (cadena de caracteres alfanumericos de 256 caracteres)
+      SECRET: 
+      BDD_HOST: 172.16.0.3
+      BDD_USER: root
+      # Escribir contraseña de la base de datos
+      BDD_PASSWORD: 
+      BDD_DATABASE: faco_luz_extension
+      BDD_PORT: 3306
+      BDD_TIMEOUT: 10000
+      BDD_CONECTION_LIMITS: 25
+
+  db:
+    image: db
+    build:
+      context: .
+      dockerfile: Dockerfile-db
+      tags: 
+        - db
+    networks:
+      extension: 
+        ipv4_address: 172.16.0.3
+    restart: always
+    environment:
+      # A condinuacion escribir la contraseña de la base de datos
+      MARIADB_ROOT_PASSWORD: 
+    volumes: 
+      - db-data:/var/lib/mysql
+
+networks:
+  extension:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.0.0/16
+
+volumes:
+  db-data:
+  db-files:
