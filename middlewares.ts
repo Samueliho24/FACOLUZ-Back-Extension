@@ -1,5 +1,6 @@
 import jwt from 'npm:jsonwebtoken'
 import { secret } from "./main.ts"
+import multer from 'npm:multer'
 
 export function forTeachOrStud(req, res, next){
 	try{
@@ -76,3 +77,6 @@ export function forAdmins(req, res, next){
 		return res.status(401).send('Token no válido');
 	}
 }
+
+const upload = multer({dest: '/data/profilePics', })
+export const parseFormData = upload.single("file")

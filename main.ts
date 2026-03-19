@@ -1,7 +1,7 @@
 import express from "npm:express@4.18.2";
 import cors from 'npm:cors'
 import jwt from 'npm:jsonwebtoken'
-import * as tokenVerification from './tokenVerification.ts'
+import * as mw from './middlewares.ts'
 import "jsr:@std/dotenv/load";
 import * as t from "./interfaces.ts"
 import { BuildReport } from "./PdfModels/DailyReport.ts";
@@ -53,7 +53,7 @@ app.post('/api/login', async (req, res) => {
 })
 
 //Obtener el numero de Factura a emitir
-app.get('/api/getIdInvoice', tokenVerification.forAdmins, async (req, res) => {
+app.get('/api/getIdInvoice', mw.forAdmins, async (req, res) => {
 	try{
 		const dbResponse = await getIdInvoice()
 		res.status(200).send(dbResponse)
@@ -63,7 +63,7 @@ app.get('/api/getIdInvoice', tokenVerification.forAdmins, async (req, res) => {
 	}
 })
 
-app.post('/api/issueInvoice', tokenVerification.forAdmins, async (req, res) => {
+app.post('/api/issueInvoice', mw.forAdmins, async (req, res) => {
 	const token = req.headers.authorization.split(" ")[1]
 	const payload = jwt.verify(token, secret)
 	try {
@@ -80,7 +80,7 @@ app.post('/api/issueInvoice', tokenVerification.forAdmins, async (req, res) => {
 })
 
 //Obtener facturas por verificar
-app.get('/api/getinvoicesVerification/:page', tokenVerification.forAdmins, async (req, res) => {
+app.get('/api/getinvoicesVerification/:page', mw.forAdmins, async (req, res) => {
 	const page = Number(req.params.page)
 	try{
 		const dbResponse = await getinvoicesVerification(page)
@@ -91,7 +91,7 @@ app.get('/api/getinvoicesVerification/:page', tokenVerification.forAdmins, async
 	}
 })
 //Obtener facturas por verificar y por ID de paciente
-app.get('/api/getInvoicesVerificationById/:patientId/:page', tokenVerification.forAdmins, async (req, res) => {
+app.get('/api/getInvoicesVerificationById/:patientId/:page', mw.forAdmins, async (req, res) => {
 	const patientId = req.params.patientId
 	const page = Number(req.params.page)
 	try{
@@ -103,7 +103,7 @@ app.get('/api/getInvoicesVerificationById/:patientId/:page', tokenVerification.f
 	}
 })
 //Verificar factura
-app.post('/api/verifyInvoice', tokenVerification.forAdmins, async (req, res) => {
+app.post('/api/verifyInvoice', mw.forAdmins, async (req, res) => {
 	const {idParam, status} = req.body
 	try{
 		const dbResponse = await verifyInvoice(idParam, status)
@@ -115,7 +115,7 @@ app.post('/api/verifyInvoice', tokenVerification.forAdmins, async (req, res) => 
 })
 
 //Modificar para obtener citas por cedula de pagador
-app.get('/api/getInvoices/:patientId/:page', tokenVerification.forAdmins, async (req, res) => {
+app.get('/api/getInvoices/:patientId/:page', mw.forAdmins, async (req, res) => {
 	const patientId = req.params.patientId
 	const page = Number(req.params.page)
 	try{
@@ -127,7 +127,7 @@ app.get('/api/getInvoices/:patientId/:page', tokenVerification.forAdmins, async 
 	}
 })
 
-app.get('/api/getInvoices/:page', tokenVerification.forAdmins, async (req, res) => {
+app.get('/api/getInvoices/:page', mw.forAdmins, async (req, res) => {
 	const page = Number(req.params.page)
 	try{
 		const dbResponse = await getAllinvoices(page)
@@ -168,7 +168,7 @@ app.get('/api/getDailyReport', async (req, res) => {
 
 //Endpoint para procesos de inscripcion masiva
 
-app.post('/api/registerStudents', tokenVerification.forAdmins, async (req, res) => {
+app.post('/api/registerStudents', mw.forAdmins, async (req, res) => {
 	try{
 		const _dbResponse = await registerStudents(req.body)
 		res.status(200).send()
@@ -178,7 +178,7 @@ app.post('/api/registerStudents', tokenVerification.forAdmins, async (req, res) 
 	}
 })
 
-app.get('/api/getStudentById/:id', tokenVerification.forAdmins,  async (req, res) => {
+app.get('/api/getStudentById/:id', mw.forAdmins,  async (req, res) => {
 	const id = Number(req.params.id)
 	try{
 		const dbResponse = await getStudentById(id)
@@ -193,7 +193,7 @@ app.get('/api/getStudentById/:id', tokenVerification.forAdmins,  async (req, res
 	}
 })
 
-app.get('/api/getStudents/:page', tokenVerification.forAdmins, async (req, res) => {
+app.get('/api/getStudents/:page', mw.forAdmins, async (req, res) => {
 	const page = Number(req.params.page)
 	try{
 		const dbResponse = await getStudents(page)
@@ -204,7 +204,7 @@ app.get('/api/getStudents/:page', tokenVerification.forAdmins, async (req, res) 
 	}
 })
 
-app.post('/api/openPeriods', tokenVerification.forAdmins, async (req, res) => {
+app.post('/api/openPeriods', mw.forAdmins, async (req, res) => {
 	try{
 		const dbResponse = await openPeriods(req.body)
 		res.status(200).send(dbResponse)
@@ -214,7 +214,7 @@ app.post('/api/openPeriods', tokenVerification.forAdmins, async (req, res) => {
 	}
 })
 
-app.get('/api/getCurrentPeriod', tokenVerification.forAdmins, async (req, res) => {
+app.get('/api/getCurrentPeriod', mw.forAdmins, async (req, res) => {
 	try{
 		const dbResponse = await getCurrentPeriod()
 		res.status(200).send(dbResponse)
@@ -224,7 +224,7 @@ app.get('/api/getCurrentPeriod', tokenVerification.forAdmins, async (req, res) =
 	}
 })
 
-app.patch('/api/changeEndDatePeriod', tokenVerification.forAdmins, async (req, res) => {
+app.patch('/api/changeEndDatePeriod', mw.forAdmins, async (req, res) => {
 	const {year, periodId, newEndDate} = req.body
 	try{
 		const dbResponse = await changeEndDatePeriod(year, periodId, newEndDate)
@@ -235,7 +235,7 @@ app.patch('/api/changeEndDatePeriod', tokenVerification.forAdmins, async (req, r
 	}
 })
 
-app.post('/api/closePeriod', tokenVerification.forAdmins, async (req, res) => {
+app.post('/api/closePeriod', mw.forAdmins, async (req, res) => {
 	const {year, periodId} = req.body
 	try{
 		const dbResponse = await closePeriod(year, periodId)
@@ -246,7 +246,7 @@ app.post('/api/closePeriod', tokenVerification.forAdmins, async (req, res) => {
 	}
 })
 
-app.post('/api/course', tokenVerification.forAdmins, async (req, res) => {
+app.post('/api/course', mw.forAdmins, async (req, res) => {
 	const {description} = req.body
 	try{
 		const _dbResponse = await setCourse(description)
@@ -257,7 +257,7 @@ app.post('/api/course', tokenVerification.forAdmins, async (req, res) => {
 	}
 })
 
-app.post('/api/module', tokenVerification.forAdmins, async (req, res) => {
+app.post('/api/module', mw.forAdmins, async (req, res) => {
 	const {description} = req.body
 	try{
 		const _dbResponse = await setModule(description)
@@ -268,7 +268,7 @@ app.post('/api/module', tokenVerification.forAdmins, async (req, res) => {
 	}
 })
 
-app.get('/api/course', tokenVerification.forAdmins, async (req, res) => {
+app.get('/api/course', mw.forAdmins, async (req, res) => {
 	try{
 		const dbResponse = await getAllCourses()
 		res.status(200).send(dbResponse)	
@@ -278,7 +278,7 @@ app.get('/api/course', tokenVerification.forAdmins, async (req, res) => {
 	}
 })
 
-app.get('/api/getAllModules', tokenVerification.forAdmins, async (req, res) => {
+app.get('/api/getAllModules', mw.forAdmins, async (req, res) => {
 	try{
 		const dbResponse = await getAllModules()
 		res.status(200).send(dbResponse)
@@ -288,7 +288,7 @@ app.get('/api/getAllModules', tokenVerification.forAdmins, async (req, res) => {
 	}
 })
 
-app.post('/api/deactivateModule', tokenVerification.forAdmins, async (req, res) => {
+app.post('/api/deactivateModule', mw.forAdmins, async (req, res) => {
 	const { moduleId } = req.body
 	try{
 		await deactivateModule(moduleId)
@@ -299,7 +299,7 @@ app.post('/api/deactivateModule', tokenVerification.forAdmins, async (req, res) 
 	}
 })
 
-app.get('/api/getSearchedModule/:idParam', tokenVerification.forAdmins, async (req, res) => {
+app.get('/api/getSearchedModule/:idParam', mw.forAdmins, async (req, res) => {
 	const idParam = req.params.idParam
 	try{
 		const dbResponse = await getSearchedModule(idParam)
@@ -310,7 +310,7 @@ app.get('/api/getSearchedModule/:idParam', tokenVerification.forAdmins, async (r
 	}
 })
 
-app.get('/api/getEnrolledStudentsByModule/:idParam', tokenVerification.forAdmins, async (req, res) => {
+app.get('/api/getEnrolledStudentsByModule/:idParam', mw.forAdmins, async (req, res) => {
 	const idParam = req.params.idParam
 	try{
 		const dbResponse = await getEnrolledStudentsByModule(idParam)
@@ -321,7 +321,7 @@ app.get('/api/getEnrolledStudentsByModule/:idParam', tokenVerification.forAdmins
 	}
 })
 
-app.post('/api/getAssignedModules', tokenVerification.forAdmins, async (req, res) => {
+app.post('/api/getAssignedModules', mw.forAdmins, async (req, res) => {
 	const {courseId} = req.body
 	try{
 		const dbResponse = await getAssignedModulesByCourse(courseId)
@@ -332,7 +332,7 @@ app.post('/api/getAssignedModules', tokenVerification.forAdmins, async (req, res
 	}
 })
 
-app.post('/api/updateAssignedModules', tokenVerification.forAdmins, async (req, res) => {
+app.post('/api/updateAssignedModules', mw.forAdmins, async (req, res) => {
     const { courseId, moduleIds } = req.body
     try{
         await updateAssignedModulesForCourse(courseId, moduleIds)
@@ -343,7 +343,7 @@ app.post('/api/updateAssignedModules', tokenVerification.forAdmins, async (req, 
     }
 })
 
-app.post('/api/registerEnrollment', tokenVerification.forAdmins, async (req, res) => {
+app.post('/api/registerEnrollment', mw.forAdmins, async (req, res) => {
 	const {studentId, periodId, moduleIds, state} = req.body
 	try{
 		const dbResponse = await registerEnrollment(studentId, periodId, moduleIds, state)
@@ -354,7 +354,7 @@ app.post('/api/registerEnrollment', tokenVerification.forAdmins, async (req, res
 	}
 })
 
-app.patch('/api/updateEnrollmentState', tokenVerification.forAdmins, async (req, res) => {
+app.patch('/api/updateEnrollmentState', mw.forAdmins, async (req, res) => {
 	const {enrollmentId, newState} = req.body
 	try{
 		const dbResponse = await updateEnrollmentState(enrollmentId, newState)
@@ -368,7 +368,7 @@ app.patch('/api/updateEnrollmentState', tokenVerification.forAdmins, async (req,
 ///Falta el endpoint para cargar notas de estudiantes
 
 //Endpoint para obtener configuraciones
-// app.get('/api/getSettings', tokenVerification.forAdmins, async (req, res) => {
+// app.get('/api/getSettings', mw.forAdmins, async (req, res) => {
 // 	try{
 // 		const dbResponse = await getSettings()
 // 		res.status(200).send(dbResponse)
@@ -378,7 +378,7 @@ app.patch('/api/updateEnrollmentState', tokenVerification.forAdmins, async (req,
 // 	}
 // })
 
-app.get("/api/filterStudents/:param", tokenVerification.forAdmins, async(req, res) => {
+app.get("/api/filterStudents/:param", mw.forAdmins, async(req, res) => {
 	try{
 		const { param } = req.params;
 		const dbResponse = await filterStudents(param)
@@ -389,7 +389,7 @@ app.get("/api/filterStudents/:param", tokenVerification.forAdmins, async(req, re
 	}
 })
 
-app.get("/api/filterTeachers/:param", tokenVerification.forAdmins, async(req, res) => {
+app.get("/api/filterTeachers/:param", mw.forAdmins, async(req, res) => {
 	try{
 		const { param } = req.params;
 		const dbResponse = await filterTeachers(param)
@@ -400,7 +400,7 @@ app.get("/api/filterTeachers/:param", tokenVerification.forAdmins, async(req, re
 	}
 })
 
-app.get("/api/filterModules/:param", tokenVerification.forAdmins, async(req, res) => {
+app.get("/api/filterModules/:param", mw.forAdmins, async(req, res) => {
 	try{
 		const { param } = req.params;
 		const dbResponse = await filterModules(param)
@@ -411,7 +411,7 @@ app.get("/api/filterModules/:param", tokenVerification.forAdmins, async(req, res
 	}
 })
 
-app.get("/api/filterCourses/:param", tokenVerification.forAdmins, async(req, res) => {
+app.get("/api/filterCourses/:param", mw.forAdmins, async(req, res) => {
 	try{
 		const { param } = req.params;
 		const dbResponse = await filterCourses(param)
@@ -474,6 +474,18 @@ app.post("/api/payments", async(req, res) => {
 		const data: t.IPayment = req.body
 		const _dbResponse = await makePayment(data)
 		res.status(201).send()
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.post("/api/studentPhoto/:studentId", mw.parseFormData, async (req: Request, res) => {
+	try{
+		const studentId = req.params.studentId
+		const file = req.file
+		res.status(201).send()
+		Deno.rename(file.path, `/data/profilePics/${studentId}.png`)
 	}catch(err){
 		console.log(err)
 		res.status(500).send(err)
