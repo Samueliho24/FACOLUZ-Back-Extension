@@ -13,7 +13,8 @@ import { registerEnrollment, updateEnrollmentState } from "./dbConnection/enroll
 import { getAllinvoices, getCurrentDayInvoices, getIdInvoice, getInvoicesById, getInvoicesByPayer, getinvoicesVerification, getinvoicesVerificationById, issueInvoice, verifyInvoice } from "./dbConnection/invoices.ts"
 import { deactivateModule, filterModules, getAllModules, getAssignedModulesByCourse, getSearchedModule, setModule } from "./dbConnection/modules.ts"
 import { getPaymentsByInvoice, makePayment } from "./dbConnection/payments.ts"
-import { changeEndDatePeriod, closePeriod, getCurrentPeriod, openPeriods } from "./dbConnection/period.ts"
+import { changeEndDatePeriod, closePeriod, getCurrentPeriod, openPeriod, getPeriods } from "./dbConnection/period.ts"
+import { openSection, getSections, getCurrentSection, closeSection } from "./dbConnection/section.ts"
 import { getReportInfo } from "./dbConnection/reports.ts"
 import { filterStudents, getEnrolledStudentsByModule, getStudentById, getStudents, registerStudents } from "./dbConnection/students.ts"
 import { filterTeachers } from "./dbConnection/teachers.ts"
@@ -204,9 +205,19 @@ app.get('/api/getStudents/:page', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.post('/api/openPeriods', mw.forAdmins, async (req, res) => {
+app.post('/api/openPeriod', mw.forAdmins, async (req, res) => {
 	try{
-		const dbResponse = await openPeriods(req.body)
+		const dbResponse = await openPeriod(req.body)
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.get('/api/getPeriods', mw.forAdmins, async (req, res) => {
+	try{
+		const dbResponse = await getPeriods()
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
@@ -225,9 +236,9 @@ app.get('/api/getCurrentPeriod', mw.forAdmins, async (req, res) => {
 })
 
 app.patch('/api/changeEndDatePeriod', mw.forAdmins, async (req, res) => {
-	const {year, periodId, newEndDate} = req.body
+	const {year, period, newEndDate} = req.body
 	try{
-		const dbResponse = await changeEndDatePeriod(year, periodId, newEndDate)
+		const dbResponse = await changeEndDatePeriod(year, period, newEndDate)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
@@ -236,13 +247,51 @@ app.patch('/api/changeEndDatePeriod', mw.forAdmins, async (req, res) => {
 })
 
 app.post('/api/closePeriod', mw.forAdmins, async (req, res) => {
-	const {year, periodId} = req.body
+	const {year, period} = req.body
 	try{
-		const dbResponse = await closePeriod(year, periodId)
+		const dbResponse = await closePeriod(year, period)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
 		res.status(500).send(err)
+	}
+})
+
+// Secciones
+app.post('/api/openSection', mw.forAdmins, async (req, res) => {
+	try {
+		const dbResponse = await openSection(req.body)
+		res.status(200).send(dbResponse)
+	} catch (err) {
+		res.status(500).send('Error al abrir la sección')
+	}
+})
+
+app.get('/api/getSections', mw.forAdmins, async (req, res) => {
+	try {
+		const dbResponse = await getSections()
+		res.status(200).send(dbResponse)
+	} catch (err) {
+		res.status(500).send('Error al obtener las secciones')
+	}
+})
+
+app.get('/api/getCurrentSection', mw.forAdmins, async (req, res) => {
+	try {
+		const dbResponse = await getCurrentSection()
+		res.status(200).send(dbResponse)
+	} catch (err) {
+		res.status(500).send('Error al obtener la sección actual')
+	}
+})
+
+app.post('/api/closeSection', mw.forAdmins, async (req, res) => {
+	const { sectionId } = req.body
+	try {
+		const dbResponse = await closeSection(sectionId)
+		res.status(200).send(dbResponse)
+	} catch (err) {
+		res.status(500).send('Error al cerrar la sección')
 	}
 })
 

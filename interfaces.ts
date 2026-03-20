@@ -1,3 +1,11 @@
+export interface newSection {
+    periodId: string,
+    moduleId: string,
+    teacherId: string,
+    code: string,
+    modality: 'Intensivo' | 'Sabatino',
+    quota: number,
+}
 export interface loginData{
     id: number,
     passwordHash: string
