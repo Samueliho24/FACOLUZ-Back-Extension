@@ -16,8 +16,8 @@ import { getPaymentsByInvoice, makePayment } from "./dbConnection/payments.ts"
 import { changeEndDatePeriod, closePeriod, getCurrentPeriod, openPeriod, getPeriods } from "./dbConnection/period.ts"
 import { openSection, getSections, getCurrentSection, closeSection } from "./dbConnection/section.ts"
 import { getReportInfo } from "./dbConnection/reports.ts"
-import { filterStudents, getEnrolledStudentsByModule, getStudentById, getStudents, registerStudents } from "./dbConnection/students.ts"
-import { filterTeachers } from "./dbConnection/teachers.ts"
+import { deactivateStudent, filterStudents, getEnrolledStudentsByModule, getStudentById, getStudents, registerStudents } from "./dbConnection/students.ts"
+import { filterTeachers, getTeachers, registerTeacher,deactivateTeacher } from "./dbConnection/teachers.ts"
 
 const port = Deno.env.get("PORT")
 export const secret = Deno.env.get("SECRET")
@@ -539,6 +539,49 @@ app.post("/api/studentPhoto/:studentId", mw.parseFormData, async (req: Request, 
 		console.log(err)
 		res.status(500).send(err)
 	}
+})
+
+app.get("/api/getTeachers/:page", mw.forAdmins, async(req, res) => {
+    const page = Number(req.params.page)
+    try{
+        const dbResponse = await getTeachers(page)
+        res.status(200).send(dbResponse)
+    }catch(err){
+        console.log(err)
+        res.status(500).send(err)
+    }
+})
+
+app.post("/api/registerTeacher", mw.forAdmins, async(req, res) => {
+    try{
+        const dbResponse = await registerTeacher(req.body)
+        res.status(200).send(dbResponse)
+    }catch(err){
+        console.log(err)
+        res.status(500).send(err)
+    }
+})
+
+app.post("/api/deactivateTeacher", mw.forAdmins, async(req, res) => {
+    const { id } = req.body;
+    try {
+        const dbResponse = await deactivateTeacher(id);
+        res.status(200).send(dbResponse);
+    } catch (err) {
+        console.log(err);
+        res.status(500).send(err);
+    }
+})
+
+app.post("/api/deactivateStudent", mw.forAdmins, async(req, res) => {
+    const { id } = req.body;
+    try {
+        const dbResponse = await deactivateStudent(id);
+        res.status(200).send(dbResponse);
+    } catch (err) {
+        console.log(err);
+        res.status(500).send(err);
+    }
 })
 
 app.listen(port, "0.0.0.0", () => {

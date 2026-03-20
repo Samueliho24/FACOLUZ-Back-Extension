@@ -48,3 +48,11 @@ export interface IPayment{
     comments?: string,
     changeRate: number
 }
+
+export interface newTeacher {
+    name: string,
+    lastname: string,
+    identification: number,
+    email: string,
+    phone: string
+}

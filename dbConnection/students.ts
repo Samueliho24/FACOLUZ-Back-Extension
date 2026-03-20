@@ -76,3 +76,10 @@ export async function studentExist(studentIdentification: number){
         return false
     }
 }
+
+export async function deactivateStudent(id: string) {
+    const res = await execute(`
+        UPDATE students SET state = 'Inactivo' WHERE id = ?
+    `, [id]);
+    return res;
+}
