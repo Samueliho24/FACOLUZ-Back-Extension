@@ -5,12 +5,13 @@ export async function openPeriod(data: t.newPeriod){
     const values = [
         data.year,
         data.period,
+        data.modality,
         data.startDate,
         data.endDate
     ]
     const res = await execute(`
-        INSERT INTO periods(year, period, startDate, endDate)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO periods(year, period, modality,startDate, endDate)
+        VALUES (?, ?, ?, ?, ?)
     `, values)
     return res
 }
@@ -18,7 +19,7 @@ export async function openPeriod(data: t.newPeriod){
 
 export async function getPeriods(){
     const res = await query(`
-        SELECT id, year, period, startDate, endDate, state FROM periods
+        SELECT id, year, period, modality, startDate, endDate, status FROM periods
         ORDER BY year DESC, period DESC
     `,
     )
@@ -28,7 +29,7 @@ export async function getPeriods(){
 export async function getCurrentPeriod(){
     const res = await query(`
         SELECT id, year, period, startDate, endDate FROM periods
-        WHERE state = 'En curso'
+        WHERE status = 'En curso'
     `)
     return res
 }
@@ -45,7 +46,7 @@ export async function changeEndDatePeriod(year: number, period: number, newEndDa
 export async function closePeriod(year: number, period: number){
     const res = await execute(`
         UPDATE periods 
-        SET state = 'Finalizado'
+        SET status = 'Finalizado'
         WHERE year = ? AND period = ?	
     `, [year, period])
     return res

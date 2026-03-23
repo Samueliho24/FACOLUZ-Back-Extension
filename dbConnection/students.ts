@@ -55,7 +55,7 @@ export async function getEnrolledStudentsByModule(moduleId: number){
             s.address,
             s.instructionGrade,
             e.dateEnrollments,
-            e.state
+            e.status
 		FROM enrollments e
 		JOIN enrollments_modules em ON e.id = em.enrollmentId
 		JOIN students s ON e.studentId = s.id
@@ -79,7 +79,7 @@ export async function studentExist(studentIdentification: number){
 
 export async function deactivateStudent(id: string) {
     const res = await execute(`
-        UPDATE students SET state = 'Inactivo' WHERE id = ?
+        UPDATE students SET status = 'Inactivo' WHERE id = ?
     `, [id]);
     return res;
 }

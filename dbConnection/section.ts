@@ -7,28 +7,26 @@ export async function openSection(data: t.newSection) {
         data.moduleId,
         data.teacherId,
         data.code,
-        data.modality,
         data.quota,
     ]
     const res = await execute(`
-        INSERT INTO sections(periodId, moduleId, teacherId, code, modality, quota, status)
-        VALUES (?, ?, ?, ?, ?, ?, 'Activa')
+        INSERT INTO sections(periodId, moduleId, teacherId, code, quota)
+        VALUES (?, ?, ?, ?, ?)
     `, values)
     return res
 }
 
 export async function getSections(id: string) {
     const res = await query(`
-        SELECT id, periodId, moduleId, teacherId, code, modality, quota, status FROM sections
-        WHERE periodId = ?
-        ORDER BY code ASC
+        SELECT s.id, s.periodId, m.description,s.moduleId, s.teacherId, s.code, s.quota, s.status FROM sections s JOIN modules m ON s.moduleId = m.id WHERE s.periodId = ?
+        ORDER BY s.code ASC
     `, [id])
     return res
 }
 
 export async function getCurrentSection() {
     const res = await query(`
-        SELECT id, periodId, moduleId, teacherId, code, modality, quota, status FROM sections
+        SELECT id, periodId, moduleId, teacherId, code, quota, status FROM sections
         WHERE status = 'Activa'
     `)
     return res
@@ -45,9 +43,8 @@ export async function closeSection(sectionId: string) {
 
 export async function getSectionByModule(moduleId: string) {
     const res = await query(`
-        SELECT id, periodId, moduleId, teacherId, code, modality, quota, status FROM sections
-        WHERE moduleId = ? AND status = 'Activa'
-        ORDER BY code ASC
+        SELECT s.id, s.periodId,s.moduleId, s.teacherId, s.code, s.quota, s.status, p.period, p.year, p.modality FROM sections s JOIN periods p ON s.periodId = p.id WHERE s.moduleId = ? AND s.status = 'Activa'
+        ORDER BY s.code ASC
     `, [moduleId])
     return res
 }

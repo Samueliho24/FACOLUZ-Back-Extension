@@ -3,7 +3,6 @@ export interface newSection {
     moduleId: string,
     teacherId: string,
     code: string,
-    modality: 'Intensivo' | 'Sabatino',
     quota: number,
 }
 export interface loginData{
@@ -34,6 +33,7 @@ export interface newStudent{
 export interface newPeriod{
     year: number,
     period: number,
+    modality: 'Intensivo' | 'Sabatino',
     startDate: Date,
     endDate: Date
 }

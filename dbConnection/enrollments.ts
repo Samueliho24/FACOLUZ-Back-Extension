@@ -1,11 +1,11 @@
 import { query, execute } from "../dbConnection.ts"
 
-export async function registerEnrollment(studentId: string, periodId: string, moduleIds: number[], state: 'Pagada' | 'Deuda' = 'Deuda') {
+export async function registerEnrollment(studentId: string, periodId: string, moduleIds: number[], status: 'Pagada' | 'Deuda' = 'Deuda') {
 	const enrollmentId = crypto.randomUUID()
 	const res1 =await execute(`
-		INSERT INTO enrollments(id, studentId, periodId, dateEnrollments, state)
+		INSERT INTO enrollments(id, studentId, periodId, dateEnrollments, status)
 		VALUES(?, ?, ?, NOW(), ?)
-	`, [enrollmentId, studentId, periodId, state])
+	`, [enrollmentId, studentId, periodId, status])
 	if (moduleIds && moduleIds.length > 0) {
 		const values = moduleIds.map((m) => [enrollmentId, m])
 		await execute(`
@@ -19,7 +19,7 @@ export async function registerEnrollment(studentId: string, periodId: string, mo
 export async function updateEnrollmentState(enrollmentId: string, newState: string){
 	const res = await execute(`
 		UPDATE enrollments 
-		SET state = ?
+		SET status = ?
 		WHERE id = ?	
 	`, [newState, enrollmentId])
 	return res

@@ -35,7 +35,7 @@ export async function updateAssignedModulesForCourse(courseId: string, moduleIds
 				params.push(courseId)
 				params.push(index)
 			})
-			await execute(`INSERT INTO modules_courses(moduleid, courseid, position) VALUES ${placeholders}`, params)
+			await execute(`INSERT INTO modules_courses(moduleid, courseid, order) VALUES ${placeholders}`, params)
 		}
 	}catch(err){
 		console.log(err)

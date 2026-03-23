@@ -10,7 +10,7 @@ export async function filterModules(param: string){
 }
 
 export async function deactivateModule(moduleId: string){
-    const res = await execute(`UPDATE modules SET state = 'Inactivo' WHERE id = ?`, [moduleId])
+    const res = await execute(`UPDATE modules SET status = 'Inactivo' WHERE id = ?`, [moduleId])
     return res
 }
 
@@ -22,14 +22,14 @@ export async function setModule(description: string){
 }
 
 export async function getAllModules(){
-    const res = await query(`SELECT * FROM modules WHERE state = 'Activo' ORDER BY description ASC`)
+    const res = await query(`SELECT * FROM modules WHERE status = 'Activo' ORDER BY description ASC`)
     return res
 }
 
 export async function getSearchedModule(description: string){
     const res = await query(`
         SELECT * FROM modules
-        WHERE description LIKE ? AND state = 'Activo'
+        WHERE description LIKE ? AND status = 'Activo'
         ORDER BY description ASC
     `, [`${description}%`])
     return res
