@@ -14,7 +14,7 @@ import { getAllinvoices, getCurrentDayInvoices, getIdInvoice, getInvoicesById, g
 import { deactivateModule, filterModules, getAllModules, getAssignedModulesByCourse, getSearchedModule, setModule } from "./dbConnection/modules.ts"
 import { getPaymentsByInvoice, makePayment } from "./dbConnection/payments.ts"
 import { changeEndDatePeriod, closePeriod, getCurrentPeriod, openPeriod, getPeriods } from "./dbConnection/period.ts"
-import { openSection, getSections, getCurrentSection, closeSection } from "./dbConnection/section.ts"
+import { openSection, getSections, getCurrentSection, closeSection, getSectionByModule } from "./dbConnection/section.ts"
 import { getReportInfo } from "./dbConnection/reports.ts"
 import { deactivateStudent, filterStudents, getEnrolledStudentsByModule, getStudentById, getStudents, registerStudents } from "./dbConnection/students.ts"
 import { filterTeachers, getTeachers, registerTeacher,deactivateTeacher } from "./dbConnection/teachers.ts"
@@ -169,41 +169,7 @@ app.get('/api/getDailyReport', async (req, res) => {
 
 //Endpoint para procesos de inscripcion masiva
 
-app.post('/api/registerStudents', mw.forAdmins, async (req, res) => {
-	try{
-		const _dbResponse = await registerStudents(req.body)
-		res.status(200).send()
-	}catch(err){
-		console.log(err)
-		res.status(500).send(err)
-	}
-})
 
-app.get('/api/getStudentById/:id', mw.forAdmins,  async (req, res) => {
-	const id = Number(req.params.id)
-	try{
-		const dbResponse = await getStudentById(id)
-		if(dbResponse.length == 0){
-			res.status(404).send('Estudiante no encontrado')
-			return
-		}
-		res.status(200).send(dbResponse)
-	}catch(err){
-		console.log(err)
-		res.status(500).send(err)
-	}
-})
-
-app.get('/api/getStudents/:page', mw.forAdmins, async (req, res) => {
-	const page = Number(req.params.page)
-	try{
-		const dbResponse = await getStudents(page)
-		res.status(200).send(dbResponse)
-	}catch(err){
-		console.log(err)
-		res.status(500).send(err)
-	}
-})
 
 app.post('/api/openPeriod', mw.forAdmins, async (req, res) => {
 	try{
@@ -267,9 +233,10 @@ app.post('/api/openSection', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.get('/api/getSections', mw.forAdmins, async (req, res) => {
+app.get('/api/getSections/:id', mw.forAdmins, async (req, res) => {
+	const id = req.params.id
 	try {
-		const dbResponse = await getSections()
+		const dbResponse = await getSections(id)
 		res.status(200).send(dbResponse)
 	} catch (err) {
 		res.status(500).send('Error al obtener las secciones')
@@ -285,6 +252,16 @@ app.get('/api/getCurrentSection', mw.forAdmins, async (req, res) => {
 	}
 })
 
+app.get('/api/getSectionByModule/:moduleId', mw.forAdmins, async (req, res) => {
+	const moduleId = req.params.moduleId
+	try {
+		const dbResponse = await getSectionByModule(moduleId)
+		res.status(200).send(dbResponse)
+	} catch (err) {
+		res.status(500).send('Error al obtener las secciones')
+	}
+})
+
 app.post('/api/closeSection', mw.forAdmins, async (req, res) => {
 	const { sectionId } = req.body
 	try {
@@ -294,6 +271,8 @@ app.post('/api/closeSection', mw.forAdmins, async (req, res) => {
 		res.status(500).send('Error al cerrar la sección')
 	}
 })
+
+
 
 app.post('/api/course', mw.forAdmins, async (req, res) => {
 	const {description} = req.body
@@ -427,28 +406,6 @@ app.patch('/api/updateEnrollmentState', mw.forAdmins, async (req, res) => {
 // 	}
 // })
 
-app.get("/api/filterStudents/:param", mw.forAdmins, async(req, res) => {
-	try{
-		const { param } = req.params;
-		const dbResponse = await filterStudents(param)
-		res.status(200).send(dbResponse)
-	}catch(err){
-		console.log(err)
-		res.status(500).send(err)
-	}
-})
-
-app.get("/api/filterTeachers/:param", mw.forAdmins, async(req, res) => {
-	try{
-		const { param } = req.params;
-		const dbResponse = await filterTeachers(param)
-		res.status(200).send(dbResponse)
-	}catch(err){
-		console.log(err)
-		res.status(500).send(err)
-	}
-})
-
 app.get("/api/filterModules/:param", mw.forAdmins, async(req, res) => {
 	try{
 		const { param } = req.params;
@@ -529,6 +486,43 @@ app.post("/api/payments", async(req, res) => {
 	}
 })
 
+//Students
+app.post('/api/registerStudents', mw.forAdmins, async (req, res) => {
+	try{
+		const _dbResponse = await registerStudents(req.body)
+		res.status(200).send()
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.get('/api/getStudentById/:id', mw.forAdmins,  async (req, res) => {
+	const id = Number(req.params.id)
+	try{
+		const dbResponse = await getStudentById(id)
+		if(dbResponse.length == 0){
+			res.status(404).send('Estudiante no encontrado')
+			return
+		}
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.get('/api/getStudents/:page', mw.forAdmins, async (req, res) => {
+	const page = Number(req.params.page)
+	try{
+		const dbResponse = await getStudents(page)
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
 app.post("/api/studentPhoto/:studentId", mw.parseFormData, async (req: Request, res) => {
 	try{
 		const studentId = req.params.studentId
@@ -541,6 +535,30 @@ app.post("/api/studentPhoto/:studentId", mw.parseFormData, async (req: Request, 
 	}
 })
 
+app.post("/api/deactivateStudent", mw.forAdmins, async(req, res) => {
+    const { id } = req.body;
+    try {
+        const dbResponse = await deactivateStudent(id);
+        res.status(200).send(dbResponse);
+    } catch (err) {
+        console.log(err);
+        res.status(500).send(err);
+    }
+})
+
+app.get("/api/filterStudents/:param", mw.forAdmins, async(req, res) => {
+	try{
+		const { param } = req.params;
+		const dbResponse = await filterStudents(param)
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+
+//Teachers
 app.get("/api/getTeachers/:page", mw.forAdmins, async(req, res) => {
     const page = Number(req.params.page)
     try{
@@ -573,16 +591,18 @@ app.post("/api/deactivateTeacher", mw.forAdmins, async(req, res) => {
     }
 })
 
-app.post("/api/deactivateStudent", mw.forAdmins, async(req, res) => {
-    const { id } = req.body;
-    try {
-        const dbResponse = await deactivateStudent(id);
-        res.status(200).send(dbResponse);
-    } catch (err) {
-        console.log(err);
-        res.status(500).send(err);
-    }
+app.get("/api/filterTeachers/:param", mw.forAdmins, async(req, res) => {
+	try{
+		const { param } = req.params;
+		const dbResponse = await filterTeachers(param)
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
 })
+
+
 
 app.listen(port, "0.0.0.0", () => {
 	console.log(`Puerto: ${port}`)

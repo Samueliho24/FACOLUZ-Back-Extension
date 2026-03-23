@@ -17,11 +17,12 @@ export async function openSection(data: t.newSection) {
     return res
 }
 
-export async function getSections() {
+export async function getSections(id: string) {
     const res = await query(`
         SELECT id, periodId, moduleId, teacherId, code, modality, quota, status FROM sections
-        ORDER BY periodId DESC, code ASC
-    `)
+        WHERE periodId = ?
+        ORDER BY code ASC
+    `, [id])
     return res
 }
 
@@ -39,5 +40,14 @@ export async function closeSection(sectionId: string) {
         SET status = 'Cerrada'
         WHERE id = ?
     `, [sectionId])
+    return res
+}
+
+export async function getSectionByModule(moduleId: string) {
+    const res = await query(`
+        SELECT id, periodId, moduleId, teacherId, code, modality, quota, status FROM sections
+        WHERE moduleId = ? AND status = 'Activa'
+        ORDER BY code ASC
+    `, [moduleId])
     return res
 }
