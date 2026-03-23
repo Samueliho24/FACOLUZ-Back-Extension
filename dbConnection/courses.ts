@@ -28,13 +28,14 @@ export async function updateAssignedModulesForCourse(courseId: string, moduleIds
 		// Delete existing
 		await execute(`DELETE FROM modules_courses WHERE courseid = ?`, [courseId])
 		if (moduleIds && moduleIds.length > 0){
-			const placeholders = moduleIds.map(() => '(?, ?)').join(', ')
+			const placeholders = moduleIds.map(() => '(?, ?, ?)').join(', ')
 			const params: any[] = []
-			moduleIds.forEach((m) => {
+			moduleIds.forEach((m, index) => {
 				params.push(m)
 				params.push(courseId)
+				params.push(index)
 			})
-			await execute(`INSERT INTO modules_courses(moduleid, courseid) VALUES ${placeholders}`, params)
+			await execute(`INSERT INTO modules_courses(moduleid, courseid, position) VALUES ${placeholders}`, params)
 		}
 	}catch(err){
 		console.log(err)
