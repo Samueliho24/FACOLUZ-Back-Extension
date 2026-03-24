@@ -31,7 +31,7 @@ export async function registerStudents(user: t.newStudent){
 
 export async function getStudentById(id: number){
     const res = await query(`
-        SELECT * FROM students
+        SELECT *, status AS studentStatus FROM students
         WHERE studentsIdentification = ?
     `, [id])
     return res

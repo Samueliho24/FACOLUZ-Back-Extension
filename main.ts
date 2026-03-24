@@ -10,12 +10,12 @@ import { buildCarnet } from "./PdfModels/carnet.ts";
 import { login } from "./dbConnection/system.ts";
 import { getCertificateInfo, getCertificateList } from "./dbConnection/certificates.ts"
 import { filterCourses, getAllCourses, setCourse, updateAssignedModulesForCourse } from "./dbConnection/courses.ts"
-import { registerEnrollment, updateEnrollmentState } from "./dbConnection/enrollments.ts"
+import { getLastEnrollmentByStudentId, registerEnrollment, updateEnrollmentState } from "./dbConnection/enrollments.ts"
 import { getAllinvoices, getCurrentDayInvoices, getIdInvoice, getInvoicesById, getInvoicesByPayer, getinvoicesVerification, getinvoicesVerificationById, issueInvoice, verifyInvoice } from "./dbConnection/invoices.ts"
 import { deactivateModule, filterModules, getAllModules, getAssignedModulesByCourse, getSearchedModule, setModule } from "./dbConnection/modules.ts"
 import { getPaymentsByInvoice, makePayment } from "./dbConnection/payments.ts"
 import { changeEndDatePeriod, closePeriod, getCurrentPeriod, openPeriod, getPeriods } from "./dbConnection/period.ts"
-import { openSection, getSections, getCurrentSection, closeSection, getSectionByModule } from "./dbConnection/section.ts"
+import { openSection, getSections, getCurrentSection, closeSection, getSectionByModule, getStudentsInSection} from "./dbConnection/section.ts"
 import { getReportInfo } from "./dbConnection/reports.ts"
 import { deactivateStudent, filterStudents, getEnrolledStudentsByModule, getStudentById, getStudents, registerStudents, getStudentCardInfo } from "./dbConnection/students.ts"
 import { filterTeachers, getTeachers, registerTeacher,deactivateTeacher } from "./dbConnection/teachers.ts"
@@ -372,10 +372,38 @@ app.post('/api/updateAssignedModules', mw.forAdmins, async (req, res) => {
     }
 })
 
-app.post('/api/registerEnrollment', mw.forAdmins, async (req, res) => {
-	const {studentId, periodId, moduleIds, state} = req.body
+app.get('/api/getLastEnrollmentByStudentId/:id', mw.forAdmins, async (req, res) => {
+	const id = Number(req.params.id)
 	try{
-		const dbResponse = await registerEnrollment(studentId, periodId, moduleIds, state)
+		console.log(id)
+		const dbResponse = await getLastEnrollmentByStudentId(id)
+		console.log(dbResponse)
+		if(dbResponse.length == 0){
+			res.status(404).send('No se han encontrado inscripciones para este estudiante')
+			return
+		}
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.get('/api/getStudentsInSection/:sectionId', mw.forAdmins, async (req, res) => {
+	const sectionId = Number(req.params.sectionId)
+	try{
+		const dbResponse = await getStudentsInSection(sectionId)
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.post('/api/registerEnrollment', mw.forAdmins, async (req, res) => {
+	const {studentId, sectionId} = req.body
+	try{
+		const dbResponse = await registerEnrollment(studentId, sectionId)
 		res.status(200).send(dbResponse)		
 	}catch(err){
 		console.log(err)

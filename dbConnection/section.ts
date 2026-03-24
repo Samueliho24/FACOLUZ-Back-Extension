@@ -48,3 +48,15 @@ export async function getSectionByModule(moduleId: string) {
     `, [moduleId])
     return res
 }
+
+export async function getStudentsInSection(sectionId: string) {
+    console.log(sectionId)
+    const res = await query(`
+        SELECT s.name, s.lastname, s.studentsIdentification, e.dateEnrollment, COUNT(e.studentId) as studentCount
+        FROM enrollments e
+        JOIN students s ON e.studentId = s.id
+        JOIN enrollments_grade eg ON e.id = eg.enrollmentId
+        WHERE e.sectionId = ? AND eg.status = 'Inscrito'
+    `, [sectionId])
+    return res
+}
