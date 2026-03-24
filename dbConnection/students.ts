@@ -83,3 +83,16 @@ export async function deactivateStudent(id: string) {
     `, [id]);
     return res;
 }
+
+export async function getStudentCardInfo(studentId: string){
+    const res = await query(`
+        SELECT
+            id,
+            name,
+            lastname,
+            studentsIdentification
+        FROM students
+        WHERE id = ?
+    `, [studentId])
+    return res[0];
+}

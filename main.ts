@@ -6,6 +6,7 @@ import "jsr:@std/dotenv/load";
 import * as t from "./interfaces.ts"
 import { BuildReport } from "./PdfModels/DailyReport.ts";
 import { buildCertificate } from "./PdfModels/certificate.ts"
+import { buildCarnet } from "./PdfModels/carnet.ts";
 import { login } from "./dbConnection/system.ts";
 import { getCertificateInfo, getCertificateList } from "./dbConnection/certificates.ts"
 import { filterCourses, getAllCourses, setCourse, updateAssignedModulesForCourse } from "./dbConnection/courses.ts"
@@ -16,7 +17,7 @@ import { getPaymentsByInvoice, makePayment } from "./dbConnection/payments.ts"
 import { changeEndDatePeriod, closePeriod, getCurrentPeriod, openPeriod, getPeriods } from "./dbConnection/period.ts"
 import { openSection, getSections, getCurrentSection, closeSection, getSectionByModule } from "./dbConnection/section.ts"
 import { getReportInfo } from "./dbConnection/reports.ts"
-import { deactivateStudent, filterStudents, getEnrolledStudentsByModule, getStudentById, getStudents, registerStudents } from "./dbConnection/students.ts"
+import { deactivateStudent, filterStudents, getEnrolledStudentsByModule, getStudentById, getStudents, registerStudents, getStudentCardInfo } from "./dbConnection/students.ts"
 import { filterTeachers, getTeachers, registerTeacher,deactivateTeacher } from "./dbConnection/teachers.ts"
 
 const port = Deno.env.get("PORT")
@@ -557,6 +558,29 @@ app.get("/api/filterStudents/:param", mw.forAdmins, async(req, res) => {
 	}
 })
 
+app.get("/api/getStudentCard/:studentId", async(req, res) => {
+	try{
+		const studentId = req.params.studentId;
+		const dbResponse = await getStudentCardInfo(studentId)
+		const fileTitle = `Carnet de ${dbResponse.name} ${dbResponse.lastname}`
+		
+		const stream = res.writeHead(200, {
+			"Content-Type": "aplication/pdf",
+			"Content-Disposition": `attachment; filename=${fileTitle}.pdf`
+		})
+
+		res.status(200)
+
+		buildCarnet(
+			(data) => stream.write(data),
+			() => stream.end(),
+			dbResponse
+		)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
 
 //Teachers
 app.get("/api/getTeachers/:page", mw.forAdmins, async(req, res) => {
