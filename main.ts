@@ -390,7 +390,7 @@ app.get('/api/getLastEnrollmentByStudentId/:id', mw.forAdmins, async (req, res) 
 })
 
 app.get('/api/getStudentsInSection/:sectionId', mw.forAdmins, async (req, res) => {
-	const sectionId = Number(req.params.sectionId)
+	const sectionId = req.params.sectionId
 	try{
 		const dbResponse = await getStudentsInSection(sectionId)
 		res.status(200).send(dbResponse)

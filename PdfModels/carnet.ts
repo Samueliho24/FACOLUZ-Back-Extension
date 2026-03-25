@@ -7,7 +7,7 @@ export function buildCarnet(dataCallback: any, endCallback: any, data: ICarnet){
     doc.on('data', dataCallback);
     doc.on('end', endCallback);
 
-    doc.image(`/data/profilePics/${data.id}.png`, 50, 50, {width: 35});
+    doc.image(`./data/profilePics/${data.id}.png`, 50, 50, {width: 35});
     doc.text(`${data.name} ${data.lastname}`)
     doc.text(`${data.studentsIdentification}`)
 
