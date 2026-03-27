@@ -56,6 +56,5 @@ export async function getStudentsInSection(sectionId: string) {
         JOIN students s ON e.studentId = s.id JOIN enrollments_grade eg ON e.id = eg.enrollmentId 
         WHERE e.sectionId = ? AND eg.status = 'Inscrito'
     `, [sectionId])
-    console.log(res)
     return res
 }
