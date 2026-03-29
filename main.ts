@@ -140,7 +140,7 @@ app.get('/api/getInvoices/:page', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.get('/api/getDailyReport', async (req, res) => {
+app.get('/api/getDailyReport', mw.forAdmins, async (req, res) => {
 	try{
 
 		const currentDate = new Date
@@ -457,7 +457,7 @@ app.get("/api/filterCourses/:param", mw.forAdmins, async(req, res) => {
 	}
 })
 
-app.get("/api/certificate/:certificateId", async(req, res) => {
+app.get("/api/certificate/:certificateId", mw.forAdmins, async(req, res) => {
 	try{
 		const certificateId = req.params.certificateId;
 		console.log(req.params)
@@ -483,7 +483,7 @@ app.get("/api/certificate/:certificateId", async(req, res) => {
 	}
 })
 
-app.get("/api/certificateList/", async(req, res) => {
+app.get("/api/certificateList/", mw.forAdmins, async(req, res) => {
 	try{
 		const dbResponse = await getCertificateList();
 		res.status(200).send(dbResponse)
@@ -493,7 +493,7 @@ app.get("/api/certificateList/", async(req, res) => {
 	}
 })
 
-app.get("/api/payments/:invoiceId", async(req, res) => {
+app.get("/api/payments/:invoiceId", mw.forAdmins, async(req, res) => {
 	try{
 		const invoiceId = req.params.invoiceId
 		const dbResponse = await getPaymentsByInvoice(invoiceId);
@@ -504,7 +504,7 @@ app.get("/api/payments/:invoiceId", async(req, res) => {
 	}
 })
 
-app.post("/api/payments", async(req, res) => {
+app.post("/api/payments", mw.forAdmins, async(req, res) => {
 	try{
 		const data: t.IPayment = req.body
 		const _dbResponse = await makePayment(data)
@@ -586,7 +586,7 @@ app.get("/api/filterStudents/:param", mw.forAdmins, async(req, res) => {
 	}
 })
 
-app.get("/api/getStudentCard/:studentId", async(req, res) => {
+app.get("/api/getStudentCard/:studentId", mw.forAdmins, async(req, res) => {
 	try{
 		const studentId = req.params.studentId;
 		const dbResponse = await getStudentCardInfo(studentId)
