@@ -4,10 +4,10 @@ import jwt from 'npm:jsonwebtoken'
 import * as mw from './middlewares.ts'
 import "jsr:@std/dotenv/load";
 import * as t from "./interfaces.ts"
-import { BuildReport } from "./PdfModels/DailyReport.ts";
+import { BuildReport } from "./PdfModels/DailyReport.ts"
 import { buildCertificate } from "./PdfModels/certificate.ts"
-import { buildCarnet } from "./PdfModels/carnet.ts";
-import { login } from "./dbConnection/system.ts";
+import { buildCarnet } from "./PdfModels/carnet.ts"
+import { login } from "./dbConnection/system.ts"
 import { getCertificateInfo, getCertificateList } from "./dbConnection/certificates.ts"
 import { filterCourses, getAllCourses, setCourse, updateAssignedModulesForCourse } from "./dbConnection/courses.ts"
 import { getLastEnrollmentByStudentId, registerEnrollment, updateEnrollmentState } from "./dbConnection/enrollments.ts"
@@ -19,6 +19,7 @@ import { openSection, getSections, getCurrentSection, closeSection, getSectionBy
 import { getReportInfo } from "./dbConnection/reports.ts"
 import { deactivateStudent, filterStudents, getEnrolledStudentsByModule, getStudentById, getStudents, registerStudents, getStudentCardInfo } from "./dbConnection/students.ts"
 import { filterTeachers, getTeachers, registerTeacher,deactivateTeacher } from "./dbConnection/teachers.ts"
+import { setLoadScores } from "./dbConnection/scores.ts";
 
 const port = Deno.env.get("PORT")
 export const secret = Deno.env.get("SECRET")
@@ -390,7 +391,7 @@ app.get('/api/getLastEnrollmentByStudentId/:id', mw.forAdmins, async (req, res) 
 })
 
 app.get('/api/getStudentsInSection/:sectionId', mw.forAdmins, async (req, res) => {
-	const sectionId = Number(req.params.sectionId)
+	const sectionId = req.params.sectionId
 	try{
 		const dbResponse = await getStudentsInSection(sectionId)
 		res.status(200).send(dbResponse)
@@ -434,6 +435,17 @@ app.patch('/api/updateEnrollmentState', mw.forAdmins, async (req, res) => {
 // 		res.status(500).send(err)
 // 	}
 // })
+
+app.post('/api/setLoadScores', mw.forAdmins, async (req, res) => {
+	const data =req.body
+	try{
+		const dbResponse = await setLoadScores(data)
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
 
 app.get("/api/filterModules/:param", mw.forAdmins, async(req, res) => {
 	try{
