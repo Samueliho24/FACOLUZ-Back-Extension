@@ -673,7 +673,7 @@ app.post("/api/document/:studentId", mw.forAdmins, mw.saveDoc, async (req, res) 
 		const studentId = req.params.studentId;
 		const file = req.file
 		const fileName = randomUUID()
-		Deno.rename(file.path, `/data/documents/${studentId}.pdf`)
+		Deno.rename(file.path, `/data/documents/${fileName}.pdf`)
 		const doc = {id: fileName, studentId: studentId, docType: req.body.docType, }
 		const _dbResponse = await saveDocument(doc)
 		res.status(201).send()
@@ -688,6 +688,16 @@ app.get("/api/document/:studentId", mw.forAdmins, async(req, res) => {
 		const studentId = req.params.studentId;
 		const dbResponse = await getDocumentsList(studentId)
 		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.get("/api/document/doc/:docId", async(req, res) => {
+	try{
+		const docId = req.params.docId
+		res.sendFile(`\\data\\documents\\${docId}.pdf`, {root: '/'})
 	}catch(err){
 		console.log(err)
 		res.status(500).send(err)
