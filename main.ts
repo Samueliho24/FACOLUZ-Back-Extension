@@ -20,6 +20,8 @@ import { getReportInfo } from "./dbConnection/reports.ts"
 import { deactivateStudent, filterStudents, getEnrolledStudentsByModule, getStudentById, getStudents, registerStudents, getStudentCardInfo } from "./dbConnection/students.ts"
 import { filterTeachers, getTeachers, registerTeacher,deactivateTeacher } from "./dbConnection/teachers.ts"
 import { setLoadScores } from "./dbConnection/scores.ts";
+import { getDocumentsList, saveDocument } from "./dbConnection/documents.ts"
+import { randomUUID } from "node:crypto";
 
 const port = Deno.env.get("PORT")
 export const secret = Deno.env.get("SECRET")
@@ -564,7 +566,7 @@ app.get('/api/getStudents/:page', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.post("/api/studentPhoto/:studentId", mw.parseFormData, async (req: Request, res) => {
+app.post("/api/studentPhoto/:studentId", mw.parseFormData, mw.forAdmins, async (req, res) => {
 	try{
 		const studentId = req.params.studentId
 		const file = req.file
@@ -666,7 +668,20 @@ app.get("/api/filterTeachers/:param", mw.forAdmins, async(req, res) => {
 	}
 })
 
-
+app.post("/api/document/:studentId", mw.saveDoc, async (req, res) => {
+	try{
+		const studentId = req.params.studentId;
+		const file = req.file
+		const fileName = randomUUID()
+		Deno.rename(file.path, `/data/documents/${studentId}.pdf`)
+		const doc = {id: fileName, studentId: studentId, docType: req.body.docType, }
+		const _dbResponse = await saveDocument(doc)
+		res.status(201).send()
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
 
 app.listen(port, "0.0.0.0", () => {
 	console.log(`Puerto: ${port}`)
