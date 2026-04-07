@@ -3,10 +3,21 @@ import { query, execute } from "../dbConnection.ts"
 import { IDocument } from "../types/IDocument.ts"
 
 export async function saveDocument(doc: IDocument){
-    const id = randomUUID();
+    const verification = await query(`
+        SELECT docType FROM documents WHERE studentId = ?    
+    `, [doc.studentId])
+    
+
+    verification.forEach((item: IDocument) => {
+        console.log(item, doc.docType)
+        if(item.docType == doc.docType){
+            throw new Error("No puedes subir documentos duplicados")
+        }
+    });
+
     const _res = await execute(`
         INSERT INTO documents(id, studentId, docType) VALUES(?, ?, ?)    
-    `, [id, doc.studentId, doc.docType])
+    `, [doc.id, doc.studentId, doc.docType])
 }
 
 export async function getDocumentsList(studentId: string){

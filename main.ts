@@ -669,15 +669,16 @@ app.get("/api/filterTeachers/:param", mw.forAdmins, async(req, res) => {
 })
 
 app.post("/api/document/:studentId", mw.forAdmins, mw.saveDoc, async (req, res) => {
+	const file = req.file
 	try{
 		const studentId = req.params.studentId;
-		const file = req.file
 		const fileName = randomUUID()
 		Deno.rename(file.path, `/data/documents/${fileName}.pdf`)
-		const doc = {id: fileName, studentId: studentId, docType: req.body.docType, }
+		const doc = {id: fileName, studentId: studentId, docType: req.body.docType }
 		const _dbResponse = await saveDocument(doc)
 		res.status(201).send()
 	}catch(err){
+		Deno.remove(file.path)
 		console.log(err)
 		res.status(500).send(err)
 	}
