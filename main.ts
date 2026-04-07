@@ -668,7 +668,7 @@ app.get("/api/filterTeachers/:param", mw.forAdmins, async(req, res) => {
 	}
 })
 
-app.post("/api/document/:studentId", mw.saveDoc, async (req, res) => {
+app.post("/api/document/:studentId", mw.forAdmins, mw.saveDoc, async (req, res) => {
 	try{
 		const studentId = req.params.studentId;
 		const file = req.file
@@ -677,6 +677,17 @@ app.post("/api/document/:studentId", mw.saveDoc, async (req, res) => {
 		const doc = {id: fileName, studentId: studentId, docType: req.body.docType, }
 		const _dbResponse = await saveDocument(doc)
 		res.status(201).send()
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.get("/api/document/:studentId", mw.forAdmins, async(req, res) => {
+	try{
+		const studentId = req.params.studentId;
+		const dbResponse = await getDocumentsList(studentId)
+		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
 		res.status(500).send(err)
