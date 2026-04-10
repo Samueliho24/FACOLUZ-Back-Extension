@@ -14,8 +14,8 @@ import { getLastEnrollmentByStudentId, registerEnrollment, updateEnrollmentState
 import { getAllinvoices, getCurrentDayInvoices, getIdInvoice, getInvoicesById, getInvoicesByPayer, getinvoicesVerification, getinvoicesVerificationById, issueInvoice, verifyInvoice } from "./dbConnection/invoices.ts"
 import { deactivateModule, filterModules, getAllModules, getAssignedModulesByCourse, getSearchedModule, setModule } from "./dbConnection/modules.ts"
 import { getPaymentsByInvoice, makePayment } from "./dbConnection/payments.ts"
-import { changeEndDatePeriod, closePeriod, getCurrentPeriod, openPeriod, getPeriods } from "./dbConnection/period.ts"
-import { openSection, getSections, getCurrentSection, closeSection, getSectionByModule, getStudentsInSection} from "./dbConnection/section.ts"
+import { changeEndDatePeriod, closePeriod, getCurrentPeriod, openPeriod, getPeriods, getActivePeriods} from "./dbConnection/period.ts"
+import { openSection, getSections, getCurrentSection, closeSection, getSectionByModule, getStudentsInSection, getSectionByPeriod} from "./dbConnection/section.ts"
 import { getReportInfo } from "./dbConnection/reports.ts"
 import { deactivateStudent, filterStudents, getEnrolledStudentsByModule, getStudentById, getStudents, registerStudents, getStudentCardInfo } from "./dbConnection/students.ts"
 import { filterTeachers, getTeachers, registerTeacher,deactivateTeacher } from "./dbConnection/teachers.ts"
@@ -173,7 +173,7 @@ app.get('/api/getDailyReport', mw.forAdmins, async (req, res) => {
 
 //Endpoint para procesos de inscripcion masiva
 
-
+//Periodos
 
 app.post('/api/openPeriod', mw.forAdmins, async (req, res) => {
 	try{
@@ -227,6 +227,16 @@ app.post('/api/closePeriod', mw.forAdmins, async (req, res) => {
 	}
 })
 
+app.get('/api/getActivePeriods', mw.forAdmins, async (req, res) => {
+	try{
+		const dbResponse = await getActivePeriods()
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
 // Secciones
 app.post('/api/openSection', mw.forAdmins, async (req, res) => {
 	try {
@@ -260,6 +270,16 @@ app.get('/api/getSectionByModule/:moduleId', mw.forAdmins, async (req, res) => {
 	const moduleId = req.params.moduleId
 	try {
 		const dbResponse = await getSectionByModule(moduleId)
+		res.status(200).send(dbResponse)
+	} catch (err) {
+		res.status(500).send('Error al obtener las secciones')
+	}
+})
+
+app.get('/api/getSectionByPeriod/:periodId', mw.forAdmins, async (req, res) => {
+	const periodId = req.params.periodId
+	try {
+		const dbResponse = await getSectionByPeriod(periodId)
 		res.status(200).send(dbResponse)
 	} catch (err) {
 		res.status(500).send('Error al obtener las secciones')

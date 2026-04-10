@@ -26,6 +26,14 @@ export async function getPeriods(){
     return res
 }
 
+export async function getActivePeriods(){
+    const res = await query(`
+        SELECT id, year, period, modality, startDate, endDate, status FROM periods WHERE status = 'En curso'
+        ORDER BY year DESC, period DESC
+    `)
+    return res
+}
+
 export async function getCurrentPeriod(){
     const res = await query(`
         SELECT id, year, period, startDate, endDate FROM periods
