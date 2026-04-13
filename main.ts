@@ -19,7 +19,7 @@ import { openSection, getSections, getCurrentSection, closeSection, getSectionBy
 import { getReportInfo } from "./dbConnection/reports.ts"
 import { deactivateStudent, filterStudents, getEnrolledStudentsByModule, getStudentById, getStudents, registerStudents, getStudentCardInfo } from "./dbConnection/students.ts"
 import { filterTeachers, getTeachers, registerTeacher,deactivateTeacher } from "./dbConnection/teachers.ts"
-import { setLoadScores } from "./dbConnection/scores.ts";
+import { loadScores, getScoreByStudent,updateScore } from "./dbConnection/scores.ts";
 import { getDocumentsList, saveDocument } from "./dbConnection/documents.ts"
 import { randomUUID } from "node:crypto";
 
@@ -461,7 +461,34 @@ app.patch('/api/updateEnrollmentState', mw.forAdmins, async (req, res) => {
 app.post('/api/setLoadScores', mw.forAdmins, async (req, res) => {
 	const data =req.body
 	try{
-		const dbResponse = await setLoadScores(data)
+		const dbResponse = await loadScores(data)
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.get('/api/getScoreByStudent/:moduleId/:studentIdentification', mw.forAdmins, async (req, res) => {
+	try{
+		const moduleId = req.params.moduleId
+		const studentIdentification = req.params.studentIdentification
+		const dbResponse = await getScoreByStudent(studentIdentification, moduleId)
+		if (dbResponse.length == 0){
+			res.status(404).send('No se han encontrado notas para este estudiante')
+			return
+		}
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.post('/api/setUpdateScore',mw.forAdmins, async (req,res) => {
+	const {studentId,score,moduleId,reason} = req.body
+	try{
+		const dbResponse = await updateScore(studentId,score,moduleId,reason)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
