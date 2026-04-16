@@ -486,9 +486,10 @@ app.get('/api/getScoreByStudent/:moduleId/:studentIdentification', mw.forAdmins,
 })
 
 app.post('/api/setUpdateScore',mw.forAdmins, async (req,res) => {
-	const {studentId,score,moduleId,reason} = req.body
+	const {studentId,moduleId, gradeId, lastScore,newScore,reason} = req.body
 	try{
-		const dbResponse = await updateScore(studentId,score,moduleId,reason)
+		const dbResponse = await updateScore(studentId,moduleId,gradeId,lastScore,newScore,reason)
+		console.log(dbResponse)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
