@@ -63,13 +63,40 @@ export async function closeSection(sectionId: string) {
     return res
 }
 
-export async function getSectionByModule(moduleId: string) {
+/*export async function getSectionByModule(moduleId: string) {
     const res = await query(`
         SELECT s.id, s.periodId,s.moduleId, s.code, s.quota, s.status, p.period, p.year, p.modality FROM sections s JOIN periods p ON s.periodId = p.id WHERE s.moduleId = ? AND s.status = 'Activa'
         ORDER BY s.code ASC
     `, [moduleId])
     return res
+}*/
+
+export async function getSectionByModule(moduleId: string, sectionCode?: string, periodId?: string) {
+    let sql = `
+        SELECT s.id, s.periodId, s.moduleId, s.code, s.quota, s.status, 
+               p.period, p.year, p.modality, p.status AS periodStatus
+        FROM sections s 
+        JOIN periods p ON s.periodId = p.id 
+        WHERE s.moduleId = ? AND s.status = 'Activa'
+    `;
+    const params: any[] = [moduleId];
+
+    if (sectionCode) {
+        sql += ` AND s.code = ?`;
+        params.push(sectionCode);
+    }
+    if (periodId) {
+        sql += ` AND s.periodId = ?`;
+        params.push(periodId);
+    }
+
+    sql += ` ORDER BY p.year DESC, p.period DESC, s.code ASC`;
+    
+    const res = await query(sql, params);
+    console.log(res)
+    return res;
 }
+
 export async function getStudentsInSection(sectionId: string) {
     const res = await query(`
         SELECT 

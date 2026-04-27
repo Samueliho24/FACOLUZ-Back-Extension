@@ -21,9 +21,20 @@ export async function setModule(description: string){
     `, [description])
 }
 
-export async function getAllModules(){
+/*export async function getAllModules(){
     const res = await query(`SELECT * FROM modules WHERE status = 'Activo' ORDER BY description ASC`)
     return res
+}*/
+
+export async function getAllModules() {
+    const res = await query(`
+        SELECT m.*, mc.courseid, mc.order 
+        FROM modules m
+        LEFT JOIN modules_courses mc ON m.id = mc.moduleid
+        WHERE m.status = 'Activo' 
+        ORDER BY mc.order ASC, m.description ASC
+    `);
+    return res;
 }
 
 export async function getSearchedModule(description: string){
@@ -41,4 +52,15 @@ export async function getAssignedModulesByCourse(courseId: string){
 		WHERE courseid = ?
 	`, [courseId])
 	return res
+}
+
+export async function getModulesByCourse(courseId: string) {
+    const res = await query(`
+        SELECT m.*, mc.order, mc.courseid
+        FROM modules m
+        JOIN modules_courses mc ON m.id = mc.moduleid
+        WHERE mc.courseid = ? AND m.status = 'Activo'
+        ORDER BY mc.order ASC
+    `, [courseId]);
+    return res;
 }

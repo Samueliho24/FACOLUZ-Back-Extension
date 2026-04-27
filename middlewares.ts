@@ -17,8 +17,8 @@ export function forAdmins(req, res, next){
 	}
 }
 
-const upload = multer({dest: '/data/profilePics', })
+const upload = multer({dest: './data/profilePics', })
 export const parseFormData = upload.single("file")
 
-const uploadFile = multer({dest: '/data/documents'})
+const uploadFile = multer({dest: './data/documents'})
 export const saveDoc = uploadFile.single("file")

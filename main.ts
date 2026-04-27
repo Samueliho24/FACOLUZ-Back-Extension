@@ -10,11 +10,11 @@ import { buildCarnet } from "./PdfModels/carnet.ts"
 import { login } from "./dbConnection/system.ts"
 import { getCertificateInfo, getCertificateList } from "./dbConnection/certificates.ts"
 import { filterCourses, getAllCourses, setCourse, updateAssignedModulesForCourse } from "./dbConnection/courses.ts"
-import { getLastEnrollmentByStudentId, registerEnrollment, updateEnrollmentState } from "./dbConnection/enrollments.ts"
+import { getLastEnrollmentByStudentId, registerEnrollment, updateEnrollmentState, getStudentCohorts, createStudentCohort, getEnrollmentHistory,getApprovedModulesByStudent, getEnrollmentCountBySection } from "./dbConnection/enrollments.ts"
 import { getAllinvoices, getCurrentDayInvoices, getIdInvoice, getInvoicesById, getInvoicesByPayer, getinvoicesVerification, getinvoicesVerificationById, issueInvoice, verifyInvoice } from "./dbConnection/invoices.ts"
-import { deactivateModule, filterModules, getAllModules, getAssignedModulesByCourse, getSearchedModule, setModule } from "./dbConnection/modules.ts"
+import { deactivateModule, filterModules, getAllModules, getAssignedModulesByCourse, getSearchedModule, setModule, getModulesByCourse } from "./dbConnection/modules.ts"
 import { getPaymentsByInvoice, makePayment } from "./dbConnection/payments.ts"
-import { changeEndDatePeriod, closePeriod, getCurrentPeriod, openPeriod, getPeriods, getActivePeriods} from "./dbConnection/period.ts"
+import { changeEndDatePeriod, closePeriod, getCurrentPeriod, openPeriod, getPeriods, getActivePeriods, getPeriodById} from "./dbConnection/period.ts"
 import { openSection, getSections, getCurrentSection, closeSection, getSectionByModule, getStudentsInSection, getSectionByPeriod} from "./dbConnection/section.ts"
 import { getReportInfo } from "./dbConnection/reports.ts"
 import { deactivateStudent, filterStudents, getEnrolledStudentsByModule, getStudentById, getStudents, registerStudents, getStudentCardInfo } from "./dbConnection/students.ts"
@@ -265,7 +265,7 @@ app.get('/api/getCurrentSection', mw.forAdmins, async (req, res) => {
 		res.status(500).send('Error al obtener la sección actual')
 	}
 })
-
+/*
 app.get('/api/getSectionByModule/:moduleId', mw.forAdmins, async (req, res) => {
 	const moduleId = req.params.moduleId
 	try {
@@ -274,7 +274,19 @@ app.get('/api/getSectionByModule/:moduleId', mw.forAdmins, async (req, res) => {
 	} catch (err) {
 		res.status(500).send('Error al obtener las secciones')
 	}
-})
+})*/
+
+app.get('/api/getSectionByModule/:moduleId', mw.forAdmins, async (req, res) => {
+    const { moduleId } = req.params;
+    const { sectionCode, periodId } = req.params;
+    try {
+        const dbResponse = await getSectionByModule(moduleId, sectionCode, periodId);
+        res.status(200).send(dbResponse);
+    } catch (err) {
+        console.log(err);
+        res.status(500).send(err);
+    }
+});
 
 app.get('/api/getSectionByPeriod/:periodId', mw.forAdmins, async (req, res) => {
 	const periodId = req.params.periodId
@@ -423,7 +435,7 @@ app.get('/api/getStudentsInSection/:sectionId', mw.forAdmins, async (req, res) =
 	}
 })
 
-app.post('/api/registerEnrollment', mw.forAdmins, async (req, res) => {
+app.post('/api/tregisterEnrollment', mw.forAdmins, async (req, res) => {
 	const {studentId, sectionId} = req.body
 	try{
 		const dbResponse = await registerEnrollment(studentId, sectionId)
@@ -789,3 +801,67 @@ app.get("/api/document/doc/:docId", async(req, res) => {
 app.listen(port, "0.0.0.0", () => {
 	console.log(`Puerto: ${port}`)
 })
+
+
+
+//Endpoint de prueba
+app.post('/api/registerEnrollment', mw.forAdmins, async (req, res) => {
+    const { studentId, sectionId, cohortId, enrollmentType, parentEnrollmentId } = req.body;
+    try {
+        const dbResponse = await registerEnrollment({
+            studentId,
+            sectionId,
+            cohortId,
+            enrollmentType,
+            parentEnrollmentId
+        });
+        res.status(200).send(dbResponse);
+    } catch (err) {
+        console.log(err);
+        res.status(500).send(err);
+    }
+});
+
+app.post('/api/createCohort', mw.forAdmins, async (req, res) => {
+    const { studentId, periodId, sectionCode, courseId } = req.body;
+    try {
+        const cohortId = await createStudentCohort({ studentId, periodId, sectionCode, courseId });
+        res.status(200).send({ cohortId, success: true });
+    } catch (err) {
+        console.log(err);
+        res.status(500).send(err);
+    }
+});
+
+app.get('/api/getApprovedModules/:studentId/:courseId', mw.forAdmins, async (req, res) => {
+    const { studentId, courseId } = req.params;
+    try {
+        const modules = await getApprovedModulesByStudent(studentId, courseId);
+        res.status(200).send(modules);
+    } catch (err) {
+        console.log(err);
+        res.status(500).send(err);
+    }
+});
+
+app.get('/api/getEnrollmentHistory/:studentId', mw.forAdmins, async (req, res) => {
+    const { studentId } = req.params;
+    try {
+        const history = await getEnrollmentHistory(studentId);
+        res.status(200).send(history);
+    } catch (err) {
+        console.log(err);
+        res.status(500).send(err);
+    }
+});
+
+app.get('/api/getEnrollmentCount/:sectionId', mw.forAdmins, async (req, res) => {
+    const { sectionId } = req.params;
+    try {
+        const count = await getEnrollmentCountBySection(sectionId);
+        res.status(200).send({ count });
+    } catch (err) {
+        console.log(err);
+        res.status(500).send({ error: 'Error al obtener conteo de inscritos' });
+    }
+});

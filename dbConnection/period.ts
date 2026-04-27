@@ -59,3 +59,8 @@ export async function closePeriod(year: number, period: number){
     `, [year, period])
     return res
 }
+
+export async function getPeriodById(periodId: string) {
+    const res = await query(`SELECT * FROM periods WHERE id = ?`, [periodId]);
+    return res[0] || null;
+}
