@@ -19,7 +19,7 @@ import { openSection, getSections, getCurrentSection, closeSection, getSectionBy
 import { getReportInfo } from "./dbConnection/reports.ts"
 import { deactivateStudent, filterStudents, getEnrolledStudentsByModule, getStudentById, getStudents, registerStudents, getStudentCardInfo } from "./dbConnection/students.ts"
 import { filterTeachers, getTeachers, registerTeacher,deactivateTeacher } from "./dbConnection/teachers.ts"
-import { loadScores, getScoreByStudent,updateScore } from "./dbConnection/scores.ts";
+import { loadScores, getScoreByStudent, updateScore, getGradeStudentsBySection } from "./dbConnection/scores.ts";
 import { getDocumentsList, saveDocument } from "./dbConnection/documents.ts"
 import { randomUUID } from "node:crypto";
 
@@ -496,6 +496,20 @@ app.post('/api/setUpdateScore',mw.forAdmins, async (req,res) => {
 		res.status(500).send(err)
 	}
 })
+
+app.get('/api/getGradeStudentsBySection/:periodId/:sectionCode', mw.forAdmins, async (req, res) => {
+	try{
+		const periodId = req.params.periodId
+		const sectionCode = req.params.sectionCode
+		const dbResponse = await getGradeStudentsBySection(periodId, sectionCode)
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+
 
 app.get("/api/filterModules/:param", mw.forAdmins, async(req, res) => {
 	try{
