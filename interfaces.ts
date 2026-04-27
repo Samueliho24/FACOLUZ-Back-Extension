@@ -1,7 +1,9 @@
 export interface newSection {
     periodId: string,
     moduleId: string,
-    teacherId: string,
+    // En la nueva estructura, la asignación de docentes se modela como un arreglo de objetos con id
+    // para representar relaciones en dbConnection (tabla sections_teachers).
+    teachers: { id: string }[],
     code: string,
     quota: number,
 }

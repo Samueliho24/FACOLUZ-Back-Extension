@@ -485,7 +485,26 @@ app.get('/api/getScoreByStudent/:moduleId/:studentIdentification', mw.forAdmins,
 	}
 })
 
-app.post('/api/setUpdateScore',mw.forAdmins, async (req,res) => {
+app.post('/api/setUpdateScore', mw.forAdmins, async (req, res) => {
+    const { gradeId, evaluationMode, finalScore, partials, reason } = req.body
+    
+    try {
+        const dbResponse = await updateScore({
+            gradeId,
+            evaluationMode,
+            finalScore,
+            partials,
+            reason
+        })
+        console.log(dbResponse)
+        res.status(200).send(dbResponse)
+    } catch (err) {
+        console.log(err)
+        res.status(500).send(err)
+    }
+})
+
+/*app.post('/api/setUpdateScore',mw.forAdmins, async (req,res) => {
 	const {studentId,moduleId, gradeId, lastScore,newScore,reason} = req.body
 	try{
 		const dbResponse = await updateScore(studentId,moduleId,gradeId,lastScore,newScore,reason)
@@ -495,7 +514,7 @@ app.post('/api/setUpdateScore',mw.forAdmins, async (req,res) => {
 		console.log(err)
 		res.status(500).send(err)
 	}
-})
+})*/
 
 app.get('/api/getGradeStudentsBySection/:periodId/:sectionCode', mw.forAdmins, async (req, res) => {
 	try{

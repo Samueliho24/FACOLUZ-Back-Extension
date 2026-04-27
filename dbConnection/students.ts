@@ -24,8 +24,8 @@ export async function registerStudents(user: t.newStudent){
         const instructionGrade = user.instructionGrade
 
     const _res = await execute(`
-        INSERT INTO students(name, lastName, studentsidentification, birthDate, email, phone, address, instructionGrade)
-        VALUES(?, ?, ?, ?, ?, ?, ?, ?)	
+        INSERT INTO students(name, lastName, studentsIdentification, birthDate, email, phone, address, instructionGrade)
+        VALUES(?, ?, ?, ?, ?, ?, ?, ?) 	
     `, [name, lastName, identification, birthDate, email, phone, address, instructionGrade])
 }
 
