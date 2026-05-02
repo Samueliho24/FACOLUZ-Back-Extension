@@ -74,7 +74,7 @@ export async function closeSection(sectionId: string) {
 export async function getSectionByModule(moduleId: string, sectionCode?: string, periodId?: string) {
     let sql = `
         SELECT s.id, s.periodId, s.moduleId, s.code, s.quota, s.status, 
-               p.period, p.year, p.modality, p.status AS periodStatus
+                p.period, p.year, p.modality, p.status AS periodStatus
         FROM sections s 
         JOIN periods p ON s.periodId = p.id 
         WHERE s.moduleId = ? AND s.status = 'Activa'

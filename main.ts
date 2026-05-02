@@ -156,7 +156,6 @@ app.get('/api/getDailyReport', mw.forAdmins, async (req, res) => {
 		})
 
 		const dbResponse = await getReportInfo(floorLimit, roofLimit)
-		console.log(dbResponse)
 
 		res.status(200)
 
@@ -278,9 +277,11 @@ app.get('/api/getSectionByModule/:moduleId', mw.forAdmins, async (req, res) => {
 
 app.get('/api/getSectionByModule/:moduleId', mw.forAdmins, async (req, res) => {
     const { moduleId } = req.params;
-    const { sectionCode, periodId } = req.params;
+    const { sectionCode, periodId } = req.query;
+	console.log(moduleId, sectionCode, periodId)
     try {
-        const dbResponse = await getSectionByModule(moduleId, sectionCode, periodId);
+		const cleanPeriodId = periodId?.replace(/\/$/, '');
+        const dbResponse = await getSectionByModule(moduleId, sectionCode, cleanPeriodId);
         res.status(200).send(dbResponse);
     } catch (err) {
         console.log(err);
@@ -307,7 +308,6 @@ app.post('/api/closeSection', mw.forAdmins, async (req, res) => {
 		res.status(500).send('Error al cerrar la sección')
 	}
 })
-
 
 
 app.post('/api/course', mw.forAdmins, async (req, res) => {
@@ -410,9 +410,7 @@ app.post('/api/updateAssignedModules', mw.forAdmins, async (req, res) => {
 app.get('/api/getLastEnrollmentByStudentId/:id', mw.forAdmins, async (req, res) => {
 	const id = Number(req.params.id)
 	try{
-		console.log(id)
 		const dbResponse = await getLastEnrollmentByStudentId(id)
-		console.log(dbResponse)
 		if(dbResponse.length == 0){
 			res.status(404).send('No se han encontrado inscripciones para este estudiante')
 			return
@@ -508,7 +506,6 @@ app.post('/api/setUpdateScore', mw.forAdmins, async (req, res) => {
             partials,
             reason
         })
-        console.log(dbResponse)
         res.status(200).send(dbResponse)
     } catch (err) {
         console.log(err)
@@ -540,8 +537,6 @@ app.get('/api/getGradeStudentsBySection/:periodId/:sectionCode', mw.forAdmins, a
 	}
 })
 
-
-
 app.get("/api/filterModules/:param", mw.forAdmins, async(req, res) => {
 	try{
 		const { param } = req.params;
@@ -567,16 +562,12 @@ app.get("/api/filterCourses/:param", mw.forAdmins, async(req, res) => {
 app.get("/api/certificate/:certificateId", mw.forAdmins, async(req, res) => {
 	try{
 		const certificateId = req.params.certificateId;
-		console.log(req.params)
 		const dbResponse = await getCertificateInfo(certificateId)
-		console.log(dbResponse)
 		const fileTitle = `Certificado de ${dbResponse.course_name} a ${dbResponse.name} ${dbResponse.lastname}`
-
 		const stream = res.writeHead(200, {
 			"Content-Type": "aplication/pdf",
 			"Content-Disposition": `attachment; filename=${fileTitle}.pdf`
 		})
-
 		res.status(200)
 
 		buildCertificate(
@@ -846,6 +837,7 @@ app.get('/api/getApprovedModules/:studentId/:courseId', mw.forAdmins, async (req
 
 app.get('/api/getEnrollmentHistory/:studentId', mw.forAdmins, async (req, res) => {
     const { studentId } = req.params;
+	console.log(studentId)
     try {
         const history = await getEnrollmentHistory(studentId);
         res.status(200).send(history);
