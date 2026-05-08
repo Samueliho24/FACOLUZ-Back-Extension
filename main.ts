@@ -21,6 +21,7 @@ import { deactivateStudent, filterStudents, getEnrolledStudentsByModule, getStud
 import { filterTeachers, getTeachers, registerTeacher,deactivateTeacher } from "./dbConnection/teachers.ts"
 import { loadScores, getScoreByStudent, updateScore, getGradeStudentsBySection } from "./dbConnection/scores.ts";
 import { getDocumentsList, saveDocument } from "./dbConnection/documents.ts"
+import { getAllUsers, createNewUser, updatePassword, updateUser } from "./dbConnection/users.ts";
 import { randomUUID } from "node:crypto";
 
 const port = Deno.env.get("PORT")
@@ -58,7 +59,7 @@ app.post('/api/login', async (req, res) => {
 })
 
 //Obtener el numero de Factura a emitir
-app.get('/api/getIdInvoice', mw.forAdmins, async (req, res) => {
+app.get('/api/getIdInvoice', mw.departmentWorker, async (req, res) => {
 	try{
 		const dbResponse = await getIdInvoice()
 		res.status(200).send(dbResponse)
@@ -68,7 +69,7 @@ app.get('/api/getIdInvoice', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.post('/api/issueInvoice', mw.forAdmins, async (req, res) => {
+app.post('/api/issueInvoice', mw.departmentWorker, async (req, res) => {
 	const token = req.headers.authorization.split(" ")[1]
 	const payload = jwt.verify(token, secret)
 	try {
@@ -85,7 +86,7 @@ app.post('/api/issueInvoice', mw.forAdmins, async (req, res) => {
 })
 
 //Obtener facturas por verificar
-app.get('/api/getinvoicesVerification/:page', mw.forAdmins, async (req, res) => {
+app.get('/api/getinvoicesVerification/:page', mw.departmentWorker, async (req, res) => {
 	const page = Number(req.params.page)
 	try{
 		const dbResponse = await getinvoicesVerification(page)
@@ -96,7 +97,7 @@ app.get('/api/getinvoicesVerification/:page', mw.forAdmins, async (req, res) => 
 	}
 })
 //Obtener facturas por verificar y por ID de paciente
-app.get('/api/getInvoicesVerificationById/:patientId/:page', mw.forAdmins, async (req, res) => {
+app.get('/api/getInvoicesVerificationById/:patientId/:page', mw.departmentWorker, async (req, res) => {
 	const patientId = req.params.patientId
 	const page = Number(req.params.page)
 	try{
@@ -108,7 +109,7 @@ app.get('/api/getInvoicesVerificationById/:patientId/:page', mw.forAdmins, async
 	}
 })
 //Verificar factura
-app.post('/api/verifyInvoice', mw.forAdmins, async (req, res) => {
+app.post('/api/verifyInvoice', mw.departmentWorker, async (req, res) => {
 	const {idParam, status} = req.body
 	try{
 		const dbResponse = await verifyInvoice(idParam, status)
@@ -120,7 +121,7 @@ app.post('/api/verifyInvoice', mw.forAdmins, async (req, res) => {
 })
 
 //Modificar para obtener citas por cedula de pagador
-app.get('/api/getInvoices/:patientId/:page', mw.forAdmins, async (req, res) => {
+app.get('/api/getInvoices/:patientId/:page', mw.departmentWorker, async (req, res) => {
 	const patientId = req.params.patientId
 	const page = Number(req.params.page)
 	try{
@@ -132,7 +133,7 @@ app.get('/api/getInvoices/:patientId/:page', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.get('/api/getInvoices/:page', mw.forAdmins, async (req, res) => {
+app.get('/api/getInvoices/:page', mw.departmentWorker, async (req, res) => {
 	const page = Number(req.params.page)
 	try{
 		const dbResponse = await getAllinvoices(page)
@@ -143,7 +144,7 @@ app.get('/api/getInvoices/:page', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.get('/api/getDailyReport', mw.forAdmins, async (req, res) => {
+app.get('/api/getDailyReport', mw.departmentWorker, async (req, res) => {
 	try{
 
 		const currentDate = new Date
@@ -174,7 +175,7 @@ app.get('/api/getDailyReport', mw.forAdmins, async (req, res) => {
 
 //Periodos
 
-app.post('/api/openPeriod', mw.forAdmins, async (req, res) => {
+app.post('/api/openPeriod', mw.departmentWorker, async (req, res) => {
 	try{
 		const dbResponse = await openPeriod(req.body)
 		res.status(200).send(dbResponse)
@@ -184,7 +185,7 @@ app.post('/api/openPeriod', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.get('/api/getPeriods', mw.forAdmins, async (req, res) => {
+app.get('/api/getPeriods', mw.departmentWorker, async (req, res) => {
 	try{
 		const dbResponse = await getPeriods()
 		res.status(200).send(dbResponse)
@@ -194,7 +195,7 @@ app.get('/api/getPeriods', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.get('/api/getCurrentPeriod', mw.forAdmins, async (req, res) => {
+app.get('/api/getCurrentPeriod', mw.departmentWorker, async (req, res) => {
 	try{
 		const dbResponse = await getCurrentPeriod()
 		res.status(200).send(dbResponse)
@@ -204,7 +205,7 @@ app.get('/api/getCurrentPeriod', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.patch('/api/changeEndDatePeriod', mw.forAdmins, async (req, res) => {
+app.patch('/api/changeEndDatePeriod', mw.departmentWorker, async (req, res) => {
 	const {year, period, newEndDate} = req.body
 	try{
 		const dbResponse = await changeEndDatePeriod(year, period, newEndDate)
@@ -215,7 +216,7 @@ app.patch('/api/changeEndDatePeriod', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.post('/api/closePeriod', mw.forAdmins, async (req, res) => {
+app.post('/api/closePeriod', mw.departmentWorker, async (req, res) => {
 	const {year, period} = req.body
 	try{
 		const dbResponse = await closePeriod(year, period)
@@ -226,7 +227,7 @@ app.post('/api/closePeriod', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.get('/api/getActivePeriods', mw.forAdmins, async (req, res) => {
+app.get('/api/getActivePeriods', mw.departmentWorker, async (req, res) => {
 	try{
 		const dbResponse = await getActivePeriods()
 		res.status(200).send(dbResponse)
@@ -237,7 +238,7 @@ app.get('/api/getActivePeriods', mw.forAdmins, async (req, res) => {
 })
 
 // Secciones
-app.post('/api/openSection', mw.forAdmins, async (req, res) => {
+app.post('/api/openSection', mw.departmentWorker, async (req, res) => {
 	try {
 		const dbResponse = await openSection(req.body)
 		res.status(200).send(dbResponse)
@@ -246,7 +247,7 @@ app.post('/api/openSection', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.get('/api/getSections/:id', mw.forAdmins, async (req, res) => {
+app.get('/api/getSections/:id', mw.departmentWorker, async (req, res) => {
 	const id = req.params.id
 	try {
 		const dbResponse = await getSections(id)
@@ -256,7 +257,7 @@ app.get('/api/getSections/:id', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.get('/api/getCurrentSection', mw.forAdmins, async (req, res) => {
+app.get('/api/getCurrentSection', mw.departmentWorker, async (req, res) => {
 	try {
 		const dbResponse = await getCurrentSection()
 		res.status(200).send(dbResponse)
@@ -265,7 +266,7 @@ app.get('/api/getCurrentSection', mw.forAdmins, async (req, res) => {
 	}
 })
 /*
-app.get('/api/getSectionByModule/:moduleId', mw.forAdmins, async (req, res) => {
+app.get('/api/getSectionByModule/:moduleId', mw.departmentWorker, async (req, res) => {
 	const moduleId = req.params.moduleId
 	try {
 		const dbResponse = await getSectionByModule(moduleId)
@@ -275,7 +276,7 @@ app.get('/api/getSectionByModule/:moduleId', mw.forAdmins, async (req, res) => {
 	}
 })*/
 
-app.get('/api/getSectionByModule/:moduleId', mw.forAdmins, async (req, res) => {
+app.get('/api/getSectionByModule/:moduleId', mw.departmentWorker, async (req, res) => {
     const { moduleId } = req.params;
     const { sectionCode, periodId } = req.query;
 	console.log(moduleId, sectionCode, periodId)
@@ -289,7 +290,7 @@ app.get('/api/getSectionByModule/:moduleId', mw.forAdmins, async (req, res) => {
     }
 });
 
-app.get('/api/getSectionByPeriod/:periodId', mw.forAdmins, async (req, res) => {
+app.get('/api/getSectionByPeriod/:periodId', mw.departmentWorker, async (req, res) => {
 	const periodId = req.params.periodId
 	try {
 		const dbResponse = await getSectionByPeriod(periodId)
@@ -299,7 +300,7 @@ app.get('/api/getSectionByPeriod/:periodId', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.post('/api/closeSection', mw.forAdmins, async (req, res) => {
+app.post('/api/closeSection', mw.departmentWorker, async (req, res) => {
 	const { sectionId } = req.body
 	try {
 		const dbResponse = await closeSection(sectionId)
@@ -310,7 +311,7 @@ app.post('/api/closeSection', mw.forAdmins, async (req, res) => {
 })
 
 
-app.post('/api/course', mw.forAdmins, async (req, res) => {
+app.post('/api/course', mw.departmentWorker, async (req, res) => {
 	const {description} = req.body
 	try{
 		const _dbResponse = await setCourse(description)
@@ -321,7 +322,7 @@ app.post('/api/course', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.post('/api/module', mw.forAdmins, async (req, res) => {
+app.post('/api/module', mw.departmentWorker, async (req, res) => {
 	const {description} = req.body
 	try{
 		const _dbResponse = await setModule(description)
@@ -332,7 +333,7 @@ app.post('/api/module', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.get('/api/course', mw.forAdmins, async (req, res) => {
+app.get('/api/course', mw.departmentWorker, async (req, res) => {
 	try{
 		const dbResponse = await getAllCourses()
 		res.status(200).send(dbResponse)	
@@ -342,7 +343,7 @@ app.get('/api/course', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.get('/api/getAllModules', mw.forAdmins, async (req, res) => {
+app.get('/api/getAllModules', mw.departmentWorker, async (req, res) => {
 	try{
 		const dbResponse = await getAllModules()
 		res.status(200).send(dbResponse)
@@ -352,7 +353,7 @@ app.get('/api/getAllModules', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.post('/api/deactivateModule', mw.forAdmins, async (req, res) => {
+app.post('/api/deactivateModule', mw.departmentWorker, async (req, res) => {
 	const { moduleId } = req.body
 	try{
 		await deactivateModule(moduleId)
@@ -363,7 +364,7 @@ app.post('/api/deactivateModule', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.get('/api/getSearchedModule/:idParam', mw.forAdmins, async (req, res) => {
+app.get('/api/getSearchedModule/:idParam', mw.departmentWorker, async (req, res) => {
 	const idParam = req.params.idParam
 	try{
 		const dbResponse = await getSearchedModule(idParam)
@@ -374,7 +375,7 @@ app.get('/api/getSearchedModule/:idParam', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.get('/api/getEnrolledStudentsByModule/:idParam', mw.forAdmins, async (req, res) => {
+app.get('/api/getEnrolledStudentsByModule/:idParam', mw.departmentWorker, async (req, res) => {
 	const idParam = req.params.idParam
 	try{
 		const dbResponse = await getEnrolledStudentsByModule(idParam)
@@ -385,7 +386,7 @@ app.get('/api/getEnrolledStudentsByModule/:idParam', mw.forAdmins, async (req, r
 	}
 })
 
-app.post('/api/getAssignedModules', mw.forAdmins, async (req, res) => {
+app.post('/api/getAssignedModules', mw.departmentWorker, async (req, res) => {
 	const {courseId} = req.body
 	try{
 		const dbResponse = await getAssignedModulesByCourse(courseId)
@@ -396,7 +397,7 @@ app.post('/api/getAssignedModules', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.post('/api/updateAssignedModules', mw.forAdmins, async (req, res) => {
+app.post('/api/updateAssignedModules', mw.departmentWorker, async (req, res) => {
     const { courseId, moduleIds } = req.body
     try{
         await updateAssignedModulesForCourse(courseId, moduleIds)
@@ -407,7 +408,7 @@ app.post('/api/updateAssignedModules', mw.forAdmins, async (req, res) => {
     }
 })
 
-app.get('/api/getLastEnrollmentByStudentId/:id', mw.forAdmins, async (req, res) => {
+app.get('/api/getLastEnrollmentByStudentId/:id', mw.departmentWorker, async (req, res) => {
 	const id = Number(req.params.id)
 	try{
 		const dbResponse = await getLastEnrollmentByStudentId(id)
@@ -422,7 +423,7 @@ app.get('/api/getLastEnrollmentByStudentId/:id', mw.forAdmins, async (req, res) 
 	}
 })
 
-app.get('/api/getStudentsInSection/:sectionId', mw.forAdmins, async (req, res) => {
+app.get('/api/getStudentsInSection/:sectionId', mw.departmentWorker, async (req, res) => {
 	const sectionId = req.params.sectionId
 	try{
 		const dbResponse = await getStudentsInSection(sectionId)
@@ -433,7 +434,7 @@ app.get('/api/getStudentsInSection/:sectionId', mw.forAdmins, async (req, res) =
 	}
 })
 
-app.post('/api/tregisterEnrollment', mw.forAdmins, async (req, res) => {
+app.post('/api/tregisterEnrollment', mw.departmentWorker, async (req, res) => {
 	const {studentId, sectionId} = req.body
 	try{
 		const dbResponse = await registerEnrollment(studentId, sectionId)
@@ -444,7 +445,7 @@ app.post('/api/tregisterEnrollment', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.patch('/api/updateEnrollmentState', mw.forAdmins, async (req, res) => {
+app.patch('/api/updateEnrollmentState', mw.departmentWorker, async (req, res) => {
 	const {enrollmentId, newState} = req.body
 	try{
 		const dbResponse = await updateEnrollmentState(enrollmentId, newState)
@@ -458,7 +459,7 @@ app.patch('/api/updateEnrollmentState', mw.forAdmins, async (req, res) => {
 ///Falta el endpoint para cargar notas de estudiantes
 
 //Endpoint para obtener configuraciones
-// app.get('/api/getSettings', mw.forAdmins, async (req, res) => {
+// app.get('/api/getSettings', mw.departmentWorker, async (req, res) => {
 // 	try{
 // 		const dbResponse = await getSettings()
 // 		res.status(200).send(dbResponse)
@@ -468,7 +469,7 @@ app.patch('/api/updateEnrollmentState', mw.forAdmins, async (req, res) => {
 // 	}
 // })
 
-app.post('/api/setLoadScores', mw.forAdmins, async (req, res) => {
+app.post('/api/setLoadScores', mw.departmentWorker, async (req, res) => {
 	const data =req.body
 	try{
 		const dbResponse = await loadScores(data)
@@ -479,7 +480,7 @@ app.post('/api/setLoadScores', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.get('/api/getScoreByStudent/:moduleId/:studentIdentification', mw.forAdmins, async (req, res) => {
+app.get('/api/getScoreByStudent/:moduleId/:studentIdentification', mw.departmentWorker, async (req, res) => {
 	try{
 		const moduleId = req.params.moduleId
 		const studentIdentification = req.params.studentIdentification
@@ -495,7 +496,7 @@ app.get('/api/getScoreByStudent/:moduleId/:studentIdentification', mw.forAdmins,
 	}
 })
 
-app.post('/api/setUpdateScore', mw.forAdmins, async (req, res) => {
+app.post('/api/setUpdateScore', mw.departmentWorker, async (req, res) => {
     const { gradeId, evaluationMode, finalScore, partials, reason } = req.body
     
     try {
@@ -513,7 +514,7 @@ app.post('/api/setUpdateScore', mw.forAdmins, async (req, res) => {
     }
 })
 
-/*app.post('/api/setUpdateScore',mw.forAdmins, async (req,res) => {
+/*app.post('/api/setUpdateScore',mw.departmentWorker, async (req,res) => {
 	const {studentId,moduleId, gradeId, lastScore,newScore,reason} = req.body
 	try{
 		const dbResponse = await updateScore(studentId,moduleId,gradeId,lastScore,newScore,reason)
@@ -525,7 +526,7 @@ app.post('/api/setUpdateScore', mw.forAdmins, async (req, res) => {
 	}
 })*/
 
-app.get('/api/getGradeStudentsBySection/:periodId/:sectionCode', mw.forAdmins, async (req, res) => {
+app.get('/api/getGradeStudentsBySection/:periodId/:sectionCode', mw.departmentWorker, async (req, res) => {
 	try{
 		const periodId = req.params.periodId
 		const sectionCode = req.params.sectionCode
@@ -537,7 +538,7 @@ app.get('/api/getGradeStudentsBySection/:periodId/:sectionCode', mw.forAdmins, a
 	}
 })
 
-app.get("/api/filterModules/:param", mw.forAdmins, async(req, res) => {
+app.get("/api/filterModules/:param", mw.departmentWorker, async(req, res) => {
 	try{
 		const { param } = req.params;
 		const dbResponse = await filterModules(param)
@@ -548,7 +549,7 @@ app.get("/api/filterModules/:param", mw.forAdmins, async(req, res) => {
 	}
 })
 
-app.get("/api/filterCourses/:param", mw.forAdmins, async(req, res) => {
+app.get("/api/filterCourses/:param", mw.departmentWorker, async(req, res) => {
 	try{
 		const { param } = req.params;
 		const dbResponse = await filterCourses(param)
@@ -559,7 +560,7 @@ app.get("/api/filterCourses/:param", mw.forAdmins, async(req, res) => {
 	}
 })
 
-app.get("/api/certificate/:certificateId", mw.forAdmins, async(req, res) => {
+app.get("/api/certificate/:certificateId", mw.departmentWorker, async(req, res) => {
 	try{
 		const certificateId = req.params.certificateId;
 		const dbResponse = await getCertificateInfo(certificateId)
@@ -581,7 +582,7 @@ app.get("/api/certificate/:certificateId", mw.forAdmins, async(req, res) => {
 	}
 })
 
-app.get("/api/certificateList/", mw.forAdmins, async(req, res) => {
+app.get("/api/certificateList/", mw.departmentWorker, async(req, res) => {
 	try{
 		const dbResponse = await getCertificateList();
 		res.status(200).send(dbResponse)
@@ -591,7 +592,7 @@ app.get("/api/certificateList/", mw.forAdmins, async(req, res) => {
 	}
 })
 
-app.get("/api/payments/:invoiceId", mw.forAdmins, async(req, res) => {
+app.get("/api/payments/:invoiceId", mw.departmentWorker, async(req, res) => {
 	try{
 		const invoiceId = req.params.invoiceId
 		const dbResponse = await getPaymentsByInvoice(invoiceId);
@@ -602,7 +603,7 @@ app.get("/api/payments/:invoiceId", mw.forAdmins, async(req, res) => {
 	}
 })
 
-app.post("/api/payments", mw.forAdmins, async(req, res) => {
+app.post("/api/payments", mw.departmentWorker, async(req, res) => {
 	try{
 		const data: t.IPayment = req.body
 		const _dbResponse = await makePayment(data)
@@ -614,7 +615,7 @@ app.post("/api/payments", mw.forAdmins, async(req, res) => {
 })
 
 //Students
-app.post('/api/registerStudents', mw.forAdmins, async (req, res) => {
+app.post('/api/registerStudents', mw.departmentWorker, async (req, res) => {
 	try{
 		const _dbResponse = await registerStudents(req.body)
 		res.status(200).send()
@@ -624,7 +625,7 @@ app.post('/api/registerStudents', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.get('/api/getStudentById/:id', mw.forAdmins,  async (req, res) => {
+app.get('/api/getStudentById/:id', mw.departmentWorker,  async (req, res) => {
 	const id = Number(req.params.id)
 	try{
 		const dbResponse = await getStudentById(id)
@@ -639,7 +640,7 @@ app.get('/api/getStudentById/:id', mw.forAdmins,  async (req, res) => {
 	}
 })
 
-app.get('/api/getStudents/:page', mw.forAdmins, async (req, res) => {
+app.get('/api/getStudents/:page', mw.departmentWorker, async (req, res) => {
 	const page = Number(req.params.page)
 	try{
 		const dbResponse = await getStudents(page)
@@ -650,7 +651,7 @@ app.get('/api/getStudents/:page', mw.forAdmins, async (req, res) => {
 	}
 })
 
-app.post("/api/studentPhoto/:studentId", mw.parseFormData, mw.forAdmins, async (req, res) => {
+app.post("/api/studentPhoto/:studentId", mw.parseFormData, mw.departmentWorker, async (req, res) => {
 	try{
 		const studentId = req.params.studentId
 		const file = req.file
@@ -662,7 +663,7 @@ app.post("/api/studentPhoto/:studentId", mw.parseFormData, mw.forAdmins, async (
 	}
 })
 
-app.post("/api/deactivateStudent", mw.forAdmins, async(req, res) => {
+app.post("/api/deactivateStudent", mw.departmentWorker, async(req, res) => {
     const { id } = req.body;
     try {
         const dbResponse = await deactivateStudent(id);
@@ -673,7 +674,7 @@ app.post("/api/deactivateStudent", mw.forAdmins, async(req, res) => {
     }
 })
 
-app.get("/api/filterStudents/:param", mw.forAdmins, async(req, res) => {
+app.get("/api/filterStudents/:param", mw.departmentWorker, async(req, res) => {
 	try{
 		const { param } = req.params;
 		const dbResponse = await filterStudents(param)
@@ -684,7 +685,7 @@ app.get("/api/filterStudents/:param", mw.forAdmins, async(req, res) => {
 	}
 })
 
-app.get("/api/getStudentCard/:studentId", mw.forAdmins, async(req, res) => {
+app.get("/api/getStudentCard/:studentId", mw.departmentWorker, async(req, res) => {
 	try{
 		const studentId = req.params.studentId;
 		const dbResponse = await getStudentCardInfo(studentId)
@@ -709,7 +710,7 @@ app.get("/api/getStudentCard/:studentId", mw.forAdmins, async(req, res) => {
 })
 
 //Teachers
-app.get("/api/getTeachers/:page", mw.forAdmins, async(req, res) => {
+app.get("/api/getTeachers/:page", mw.departmentWorker, async(req, res) => {
     const page = Number(req.params.page)
     try{
         const dbResponse = await getTeachers(page)
@@ -720,7 +721,7 @@ app.get("/api/getTeachers/:page", mw.forAdmins, async(req, res) => {
     }
 })
 
-app.post("/api/registerTeacher", mw.forAdmins, async(req, res) => {
+app.post("/api/registerTeacher", mw.departmentWorker, async(req, res) => {
     try{
         const dbResponse = await registerTeacher(req.body)
         res.status(200).send(dbResponse)
@@ -730,7 +731,7 @@ app.post("/api/registerTeacher", mw.forAdmins, async(req, res) => {
     }
 })
 
-app.post("/api/deactivateTeacher", mw.forAdmins, async(req, res) => {
+app.post("/api/deactivateTeacher", mw.departmentWorker, async(req, res) => {
     const { id } = req.body;
     try {
         const dbResponse = await deactivateTeacher(id);
@@ -741,7 +742,7 @@ app.post("/api/deactivateTeacher", mw.forAdmins, async(req, res) => {
     }
 })
 
-app.get("/api/filterTeachers/:param", mw.forAdmins, async(req, res) => {
+app.get("/api/filterTeachers/:param", mw.departmentWorker, async(req, res) => {
 	try{
 		const { param } = req.params;
 		const dbResponse = await filterTeachers(param)
@@ -752,7 +753,7 @@ app.get("/api/filterTeachers/:param", mw.forAdmins, async(req, res) => {
 	}
 })
 
-app.post("/api/document/:studentId", mw.forAdmins, mw.saveDoc, async (req, res) => {
+app.post("/api/document/:studentId", mw.departmentWorker, mw.saveDoc, async (req, res) => {
 	const file = req.file
 	try{
 		const studentId = req.params.studentId;
@@ -768,7 +769,7 @@ app.post("/api/document/:studentId", mw.forAdmins, mw.saveDoc, async (req, res) 
 	}
 })
 
-app.get("/api/document/:studentId", mw.forAdmins, async(req, res) => {
+app.get("/api/document/:studentId", mw.departmentWorker, async(req, res) => {
 	try{
 		const studentId = req.params.studentId;
 		const dbResponse = await getDocumentsList(studentId)
@@ -789,14 +790,8 @@ app.get("/api/document/doc/:docId", async(req, res) => {
 	}
 })
 
-app.listen(port, "0.0.0.0", () => {
-	console.log(`Puerto: ${port}`)
-})
-
-
-
 //Endpoint de prueba
-app.post('/api/registerEnrollment', mw.forAdmins, async (req, res) => {
+app.post('/api/registerEnrollment', mw.departmentWorker, async (req, res) => {
     const { studentId, sectionId, cohortId, enrollmentType, parentEnrollmentId } = req.body;
     try {
         const dbResponse = await registerEnrollment({
@@ -813,7 +808,7 @@ app.post('/api/registerEnrollment', mw.forAdmins, async (req, res) => {
     }
 });
 
-app.post('/api/createCohort', mw.forAdmins, async (req, res) => {
+app.post('/api/createCohort', mw.departmentWorker, async (req, res) => {
     const { studentId, periodId, sectionCode, courseId } = req.body;
     try {
         const cohortId = await createStudentCohort({ studentId, periodId, sectionCode, courseId });
@@ -824,7 +819,7 @@ app.post('/api/createCohort', mw.forAdmins, async (req, res) => {
     }
 });
 
-app.get('/api/getApprovedModules/:studentId/:courseId', mw.forAdmins, async (req, res) => {
+app.get('/api/getApprovedModules/:studentId/:courseId', mw.departmentWorker, async (req, res) => {
     const { studentId, courseId } = req.params;
     try {
         const modules = await getApprovedModulesByStudent(studentId, courseId);
@@ -835,7 +830,7 @@ app.get('/api/getApprovedModules/:studentId/:courseId', mw.forAdmins, async (req
     }
 });
 
-app.get('/api/getEnrollmentHistory/:studentId', mw.forAdmins, async (req, res) => {
+app.get('/api/getEnrollmentHistory/:studentId', mw.departmentWorker, async (req, res) => {
     const { studentId } = req.params;
 	console.log(studentId)
     try {
@@ -847,7 +842,7 @@ app.get('/api/getEnrollmentHistory/:studentId', mw.forAdmins, async (req, res) =
     }
 });
 
-app.get('/api/getEnrollmentCount/:sectionId', mw.forAdmins, async (req, res) => {
+app.get('/api/getEnrollmentCount/:sectionId', mw.departmentWorker, async (req, res) => {
     const { sectionId } = req.params;
     try {
         const count = await getEnrollmentCountBySection(sectionId);
@@ -857,3 +852,41 @@ app.get('/api/getEnrollmentCount/:sectionId', mw.forAdmins, async (req, res) => 
         res.status(500).send({ error: 'Error al obtener conteo de inscritos' });
     }
 });
+
+// enpoints de usuarios
+
+app.get('/api/user', mw.systemAdmin, async(req, res) => {
+	try{
+		const dbResponse = await getAllUsers()
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send()
+	}
+})
+
+app.post('/api/user', mw.systemAdmin, async (req, res) => {
+	try{
+		const user = req.body;
+		const _dbResponse = await createNewUser(user)
+		res.status(201).send()
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.patch('/api/user/', mw.systemAdmin, async (req, res) => {
+	try{
+		const user = req.body;
+		const _dbResponse = await updateUser(user)
+		res.status(201).send()
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.listen(port, "0.0.0.0", () => {
+	console.log(`Puerto: ${port}`)
+})

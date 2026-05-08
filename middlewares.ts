@@ -2,17 +2,47 @@ import jwt from 'npm:jsonwebtoken'
 import { secret } from "./main.ts"
 import multer from 'npm:multer'
 
-export function forAdmins(req, res, next){
+export function systemAdmin(req, res, next){
 	try{
 		const token = req.headers.authorization.split(" ")[1]
 		const payload = jwt.verify(token, secret)
-		if(Math.floor(Date.now() / 1000) > payload.exp){
+		if(Date().now > payload.exp){
 			res.status(401).send('Sesion expirada')
-		}else{
-			next()
+		}else if(payload.type >= 1){
+			res.status(401).send('Restringido')
 		}
+		next()
 	}catch(err){
-		console.log(err)
+		return res.status(401).send('Token no válido');
+	}
+}
+
+export function departmentChief(req, res, next){
+	try{
+		const token = req.headers.authorization.split(" ")[1]
+		const payload = jwt.verify(token, secret)
+		if(Date().now > payload.exp){
+			res.status(401).send('Sesion expirada')
+		}else if(payload.type >= 2){
+			res.status(401).send('Restringido')
+		}
+		next()
+	}catch(err){
+		return res.status(401).send('Token no válido');
+	}
+}
+
+export function departmentWorker(req, res, next){
+	try{
+		const token = req.headers.authorization.split(" ")[1]
+		const payload = jwt.verify(token, secret)
+		if(Date().now > payload.exp){
+			res.status(401).send('Sesion expirada')
+		}else if(payload.type >= 3){
+			res.status(401).send('Restringido')
+		}
+		next()
+	}catch(err){
 		return res.status(401).send('Token no válido');
 	}
 }
