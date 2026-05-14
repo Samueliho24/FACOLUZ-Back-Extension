@@ -43,9 +43,13 @@ INSERT INTO `certificates` VALUES
 /*!40000 ALTER TABLE `certificates` ENABLE KEYS */;
 UNLOCK TABLES;
 
---
--- Table structure for table `courses`
---
+CREATE TABLE `changelogs` (
+  `id` uuid NOT NULL DEFAULT uuid(),
+  `userId` int(11) UNSIGNED NOT NULL,
+  `changeType` int(11) NOT NULL,
+  `description` text NOT NULL,
+  `create_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `courses` (
   `id` uuid NOT NULL DEFAULT uuid(),
@@ -62,17 +66,21 @@ INSERT INTO `courses` VALUES
 /*!40000 ALTER TABLE `courses` ENABLE KEYS */;
 UNLOCK TABLES;
 
---
--- Table structure for table `enrollments`
---
+CREATE TABLE `documents` (
+  `id` uuid NOT NULL DEFAULT uuid(),
+  `studentId` uuid NOT NULL,
+  `docType` int(11) NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 CREATE TABLE `enrollments` (
   `id` uuid NOT NULL DEFAULT uuid(),
   `studentId` uuid NOT NULL,
-  `periodId` uuid NOT NULL,
+  `sectionId` uuid NOT NULL,
+  `cohortId` uuid NOT NULL,
+  `enrollmentType` enum('Regular','Repitiente') NOT NULL DEFAULT 'Regular',
+  `parentEnrollmentId` uuid DEFAULT NULL COMMENT 'Si es repitiente, ID de la inscripcion original que reprobo',
   `dateEnrollments` datetime NOT NULL DEFAULT current_timestamp(),
-  `section` int(11) NOT NULL,
-  `state` enum('Pagada','Deuda') NOT NULL,
+  `status` enum('Pagada','Deuda') NOT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_student_enrollment` (`studentId`),
   KEY `fk_period_enrollment` (`periodId`),
