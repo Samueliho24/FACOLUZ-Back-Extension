@@ -83,8 +83,6 @@ CREATE TABLE `enrollments` (
   `status` enum('Pagada','Deuda') NOT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_student_enrollment` (`studentId`),
-  KEY `fk_period_enrollment` (`periodId`),
-  CONSTRAINT `fk_period_enrollment` FOREIGN KEY (`periodId`) REFERENCES `periods` (`id`),
   CONSTRAINT `fk_student_enrollment` FOREIGN KEY (`studentId`) REFERENCES `students` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -178,6 +176,7 @@ UNLOCK TABLES;
 CREATE TABLE `modules_courses` (
   `moduleid` uuid NOT NULL,
   `courseid` uuid NOT NULL,
+  `order` int(2) UNSIGNED NOT NULL,
   KEY `modules_courses_courses_FK` (`courseid`),
   KEY `modules_courses_modules_FK` (`moduleid`),
   CONSTRAINT `modules_courses_courses_FK` FOREIGN KEY (`courseid`) REFERENCES `courses` (`id`),
@@ -224,6 +223,7 @@ CREATE TABLE `periods` (
   `id` uuid NOT NULL DEFAULT uuid(),
   `year` int(4) NOT NULL,
   `period` int(2) NOT NULL,
+  `modality` enum('Intensivo','Sabatino') NOT NULL,
   `startDate` date NOT NULL,
   `endDate` date NOT NULL,
   `create_at` datetime NOT NULL DEFAULT current_timestamp(),
