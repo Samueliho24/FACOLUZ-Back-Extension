@@ -6,7 +6,8 @@ export function systemAdmin(req, res, next){
 	try{
 		const token = req.headers.authorization.split(" ")[1]
 		const payload = jwt.verify(token, secret)
-		if(Date.now() > payload.exp){
+		const currentTime = Math.floor(Date.now() / 1000)
+		if(currentTime > payload.exp){
 			res.status(401).send('Sesion expirada')
 		}else if(payload.type >= 1){
 			res.status(401).send('Restringido')
@@ -21,7 +22,8 @@ export function departmentChief(req, res, next){
 	try{
 		const token = req.headers.authorization.split(" ")[1]
 		const payload = jwt.verify(token, secret)
-		if(Date.now() > payload.exp){
+		const currentTime = Math.floor(Date.now() / 1000)
+		if(currentTime > payload.exp){
 			res.status(401).send('Sesion expirada')
 		}else if(payload.type >= 2){
 			res.status(401).send('Restringido')
@@ -36,8 +38,9 @@ export function departmentWorker(req, res, next){
 	try{
 		const token = req.headers.authorization.split(" ")[1]
 		const payload = jwt.verify(token, secret)
-		if(Date.now() > payload.exp){
-			console.log('Sesion expirada')
+		const currentTime = Math.floor(Date.now() / 1000)
+		if(currentTime > payload.exp){
+			res.status(401).send('Sesion expirada')
 		}else if(payload.type >= 3){
 			res.status(401).send('Restringido')
 		}
