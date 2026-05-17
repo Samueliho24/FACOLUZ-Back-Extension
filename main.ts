@@ -48,7 +48,7 @@ app.post('/api/login', async (req, res) => {
 				id: dbResponse[0].id,
 				name: dbResponse[0].name,
 				type: dbResponse[0].type,
-				exp: Math.floor(Date.now() / 1000) + 600
+				exp: Math.floor(Date.now() / 1000) + 60000
 			}, secret)
 			res.status(200).send({...dbResponse[0], jwt: token})
 		}
