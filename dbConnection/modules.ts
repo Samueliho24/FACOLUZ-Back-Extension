@@ -31,7 +31,7 @@ export async function getAllModules() {
         SELECT m.*, mc.courseid, mc.order 
         FROM modules m
         LEFT JOIN modules_courses mc ON m.id = mc.moduleid
-        WHERE m.status = 'Activo' 
+        WHERE m.state = 'Activo' 
         ORDER BY mc.order ASC, m.description ASC
     `);
     return res;
@@ -59,7 +59,7 @@ export async function getModulesByCourse(courseId: string) {
         SELECT m.*, mc.order, mc.courseid
         FROM modules m
         JOIN modules_courses mc ON m.id = mc.moduleid
-        WHERE mc.courseid = ? AND m.status = 'Activo'
+        WHERE mc.courseid = ? AND m.state = 'Activo'
         ORDER BY mc.order ASC
     `, [courseId]);
     return res;
