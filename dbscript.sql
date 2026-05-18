@@ -48,7 +48,9 @@ CREATE TABLE `changelogs` (
   `userId` int(11) UNSIGNED NOT NULL,
   `changeType` int(11) NOT NULL,
   `description` text NOT NULL,
-  `create_at` datetime NOT NULL DEFAULT current_timestamp()
+  `create_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_user` FOREIGN KEY (`userId`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `courses` (
@@ -69,7 +71,9 @@ UNLOCK TABLES;
 CREATE TABLE `documents` (
   `id` uuid NOT NULL DEFAULT uuid(),
   `studentId` uuid NOT NULL,
-  `docType` int(11) NOT NULL DEFAULT 1
+  `docType` int(11) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `documents_students_FK` FOREIGN KEY (`studentId`) REFERENCES `students` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 CREATE TABLE `enrollments` (
@@ -83,33 +87,41 @@ CREATE TABLE `enrollments` (
   `status` enum('Pagada','Deuda') NOT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_student_enrollment` (`studentId`),
-  CONSTRAINT `fk_student_enrollment` FOREIGN KEY (`studentId`) REFERENCES `students` (`id`)
+  CONSTRAINT `fk_student_enrollment` FOREIGN KEY (`studentId`) REFERENCES `students` (`id`),
+  CONSTRAINT `fk_section_enrollment` FOREIGN KEY (`sectionId`) REFERENCES `sections` (`id`),
+  CONSTRAINT `fk_enrollment_cohort` FOREIGN KEY (`cohortId`) REFERENCES `student_cohorts` (`id`),
+  CONSTRAINT `fk_enrollment_parent` FOREIGN KEY (`parentEnrollmentId`) REFERENCES `enrollments` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-
-LOCK TABLES `enrollments` WRITE;
-/*!40000 ALTER TABLE `enrollments` DISABLE KEYS */;
-/*!40000 ALTER TABLE `enrollments` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `enrollments_modules`
---
-
-CREATE TABLE `enrollments_modules` (
+CREATE TABLE `enrollments_grade` (
+  `id` uuid NOT NULL DEFAULT uuid(),
   `enrollmentId` uuid NOT NULL,
-  `moduleId` uuid NOT NULL,
-  KEY `fk_enrollment` (`enrollmentId`),
-  KEY `fk_module` (`moduleId`),
-  CONSTRAINT `fk_enrollment` FOREIGN KEY (`enrollmentId`) REFERENCES `enrollments` (`id`),
-  CONSTRAINT `fk_module` FOREIGN KEY (`moduleId`) REFERENCES `modules` (`id`)
+  `score` int(3) DEFAULT NULL,
+  `dateScore` datetime DEFAULT NULL,
+  `status` enum('Inscrito','Aprobado','Reprobado','Retirado') NOT NULL DEFAULT 'Inscrito',
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_enrollment` FOREIGN KEY (`enrollmentId`) REFERENCES `enrollments` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+CREATE TABLE `enrollment_partial_scores` (
+  `id` uuid NOT NULL DEFAULT uuid(),
+  `enrollmentGradeId` uuid NOT NULL,
+  `evaluationOrder` int(2) UNSIGNED NOT NULL DEFAULT 1 COMMENT '1 = primera nota, 2 = segunda nota',
+  `score` int(3) NOT NULL,
+  `weight` decimal(5,2) UNSIGNED NOT NULL DEFAULT 50.00 COMMENT 'Peso en %',
+  `dateScore` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_partial_enrollment_grade` FOREIGN KEY (`enrollmentGradeId`) REFERENCES `enrollments_grade` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
-LOCK TABLES `enrollments_modules` WRITE;
-/*!40000 ALTER TABLE `enrollments_modules` DISABLE KEYS */;
-/*!40000 ALTER TABLE `enrollments_modules` ENABLE KEYS */;
-UNLOCK TABLES;
+-- CREATE TABLE `enrollments_modules` (
+--   `enrollmentId` uuid NOT NULL,
+--   `moduleId` uuid NOT NULL,
+--   KEY `fk_enrollment` (`enrollmentId`),
+--   KEY `fk_module` (`moduleId`),
+--   CONSTRAINT `fk_enrollment` FOREIGN KEY (`enrollmentId`) REFERENCES `enrollments` (`id`),
+--   CONSTRAINT `fk_module` FOREIGN KEY (`moduleId`) REFERENCES `modules` (`id`)
+-- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Table structure for table `invoices`
@@ -138,9 +150,23 @@ UNLOCK TABLES;
 -- Table structure for table `modules`
 --
 
+CREATE TABLE `modify_scores` (
+  `id` uuid NOT NULL DEFAULT uuid(),
+  `enrollmentGradeId` uuid NOT NULL,
+  `partialScoreId` uuid DEFAULT NULL COMMENT 'NULL = cambio a nota final. Con valor = cambio a nota parcial especifica',
+  `lastscore` int(3) NOT NULL,
+  `newscore` int(3) NOT NULL,
+  `date` datetime NOT NULL DEFAULT current_timestamp(),
+  `reason` text DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `modify_scores_enrollments_FK` FOREIGN KEY (`enrollmentGradeId`) REFERENCES `enrollments_grade` (`id`),
+  CONSTRAINT `fk_modify_partial` FOREIGN KEY (`partialScoreId`) REFERENCES `enrollment_partial_scores` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
 CREATE TABLE `modules` (
   `id` uuid NOT NULL DEFAULT uuid(),
   `description` text NOT NULL,
+  `evaluationMode` enum('Simple','Promedio') NOT NULL DEFAULT 'Simple' COMMENT 'Simple: 1 nota unica. Promedio: promedio ponderado de N notas parciales',
   `create_at` datetime NOT NULL DEFAULT current_timestamp(),
   `state` enum('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
   PRIMARY KEY (`id`)
@@ -150,22 +176,22 @@ CREATE TABLE `modules` (
 LOCK TABLES `modules` WRITE;
 /*!40000 ALTER TABLE `modules` DISABLE KEYS */;
 INSERT INTO `modules` VALUES
-('0c3dae7c-09d0-11f1-a6b1-106530499799','Nociones basicas de la Anatomia Dental y Oclusion','2026-02-14 18:05:36','Activo'),
-('0c3db180-09d0-11f1-a6b1-106530499799','Realaciones Humanas','2026-02-14 18:05:36','Activo'),
-('0c3db276-09d0-11f1-a6b1-106530499799','Sistema de Atencion Odontologica','2026-02-14 18:05:36','Activo'),
-('0c3db2bc-09d0-11f1-a6b1-106530499799','Semiologia e Historia Clinica','2026-02-14 18:05:36','Activo'),
-('0c3db2fa-09d0-11f1-a6b1-106530499799','Bioetica y Odontologia Legal','2026-02-14 18:05:36','Activo'),
-('0c3db334-09d0-11f1-a6b1-106530499799','Bioseguridad y Esterilizacion en Odontologia','2026-02-14 18:05:36','Activo'),
-('0c3db36b-09d0-11f1-a6b1-106530499799','Practica Profesional I','2026-02-14 18:05:36','Activo'),
-('0c3db3ab-09d0-11f1-a6b1-106530499799','Asistencia de Procedimientos Clincos Odontologicos','2026-02-14 18:05:36','Activo'),
-('0c3db3e8-09d0-11f1-a6b1-106530499799','Biomateriales Odontologicos','2026-02-14 18:05:36','Activo'),
-('0c3db427-09d0-11f1-a6b1-106530499799','Nociones Basicas en Radiologia e Imagenologia Odontologica','2026-02-14 18:05:36','Activo'),
-('0c3db45f-09d0-11f1-a6b1-106530499799','Epidemiologia y Sistema de informacion','2026-02-14 18:05:36','Activo'),
-('0c3db495-09d0-11f1-a6b1-106530499799','Ingles Intrumental','2026-02-14 18:05:36','Activo'),
-('0c3db4d1-09d0-11f1-a6b1-106530499799','Educacion y Promocion de la Salud Bucal','2026-02-14 18:05:36','Activo'),
-('0c3db508-09d0-11f1-a6b1-106530499799','Fotografia Clinica y Marketing en Odontologia','2026-02-14 18:05:36','Activo'),
-('0c3db53f-09d0-11f1-a6b1-106530499799','Practica Profesional II','2026-02-14 18:05:36','Activo'),
-('0c3db578-09d0-11f1-a6b1-106530499799','Servicios Comunitario','2026-02-14 18:05:36','Activo');
+('0c3dae7c-09d0-11f1-a6b1-106530499799','Nociones basicas de la Anatomia Dental y Oclusion', 'Simple', '2026-02-14 18:05:36','Activo'),
+('0c3db180-09d0-11f1-a6b1-106530499799','Realaciones Humanas', 'Simple', '2026-02-14 18:05:36','Activo'),
+('0c3db276-09d0-11f1-a6b1-106530499799','Sistema de Atencion Odontologica', 'Simple', '2026-02-14 18:05:36','Activo'),
+('0c3db2bc-09d0-11f1-a6b1-106530499799','Semiologia e Historia Clinica', 'Simple', '2026-02-14 18:05:36','Activo'),
+('0c3db2fa-09d0-11f1-a6b1-106530499799','Bioetica y Odontologia Legal', 'Simple', '2026-02-14 18:05:36','Activo'),
+('0c3db334-09d0-11f1-a6b1-106530499799','Bioseguridad y Esterilizacion en Odontologia', 'Simple', '2026-02-14 18:05:36','Activo'),
+('0c3db36b-09d0-11f1-a6b1-106530499799','Practica Profesional I', 'Simple', '2026-02-14 18:05:36','Activo'),
+('0c3db3ab-09d0-11f1-a6b1-106530499799','Asistencia de Procedimientos Clincos Odontologicos', 'Simple', '2026-02-14 18:05:36','Activo'),
+('0c3db3e8-09d0-11f1-a6b1-106530499799','Biomateriales Odontologicos', 'Simple', '2026-02-14 18:05:36','Activo'),
+('0c3db427-09d0-11f1-a6b1-106530499799','Nociones Basicas en Radiologia e Imagenologia Odontologica', 'Simple', '2026-02-14 18:05:36','Activo'),
+('0c3db45f-09d0-11f1-a6b1-106530499799','Epidemiologia y Sistema de informacion', 'Simple', '2026-02-14 18:05:36','Activo'),
+('0c3db495-09d0-11f1-a6b1-106530499799','Ingles Intrumental', 'Simple', '2026-02-14 18:05:36','Activo'),
+('0c3db4d1-09d0-11f1-a6b1-106530499799','Educacion y Promocion de la Salud Bucal', 'Simple', '2026-02-14 18:05:36','Activo'),
+('0c3db508-09d0-11f1-a6b1-106530499799','Fotografia Clinica y Marketing en Odontologia', 'Simple', '2026-02-14 18:05:36','Activo'),
+('0c3db53f-09d0-11f1-a6b1-106530499799','Practica Profesional II','2026-02-14 18:05:36', 'Simple', 'Activo'),
+('0c3db578-09d0-11f1-a6b1-106530499799','Servicios Comunitario','2026-02-14 18:05:36', 'Simple', 'Activo');
 /*!40000 ALTER TABLE `modules` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -231,31 +257,43 @@ CREATE TABLE `periods` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-
-LOCK TABLES `periods` WRITE;
-/*!40000 ALTER TABLE `periods` DISABLE KEYS */;
-/*!40000 ALTER TABLE `periods` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `scores`
---
-
-CREATE TABLE `scores` (
-  `studentsId` uuid DEFAULT NULL,
-  `moduleId` uuid DEFAULT NULL,
-  `score` int(2) DEFAULT NULL,
-  KEY `fk_student_scores` (`studentsId`),
-  KEY `fk_module_scores` (`moduleId`),
-  CONSTRAINT `fk_module_scores` FOREIGN KEY (`moduleId`) REFERENCES `modules` (`id`),
-  CONSTRAINT `fk_student_scores` FOREIGN KEY (`studentsId`) REFERENCES `students` (`id`) ON UPDATE CASCADE
+CREATE TABLE `sections` (
+  `id` uuid NOT NULL DEFAULT uuid(),
+  `periodId` uuid NOT NULL,
+  `moduleId` uuid NOT NULL,
+  `code` varchar(1) NOT NULL,
+  `quota` int(2) NOT NULL,
+  `status` enum('Activa','Por cargar','Cerrada') NOT NULL DEFAULT 'Activa',
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_module_section` FOREIGN KEY (`moduleId`) REFERENCES `modules` (`id`),
+  CONSTRAINT `fk_period_section` FOREIGN KEY (`periodId`) REFERENCES `periods` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+CREATE TABLE `sections_teachers` (
+  `id` uuid NOT NULL DEFAULT uuid(),
+  `sectionId` uuid NOT NULL,
+  `teacherId` uuid NOT NULL,
+  `evaluationOrder` int(2) UNSIGNED NOT NULL DEFAULT 1 COMMENT '1 = primer evaluador, 2 = segundo evaluador, etc.',
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_st_section` FOREIGN KEY (`sectionId`) REFERENCES `sections` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_st_teacher` FOREIGN KEY (`teacherId`) REFERENCES `teachers` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
-LOCK TABLES `scores` WRITE;
-/*!40000 ALTER TABLE `scores` DISABLE KEYS */;
-/*!40000 ALTER TABLE `scores` ENABLE KEYS */;
-UNLOCK TABLES;
+-- CREATE TABLE `scores` (
+--   `studentsId` uuid DEFAULT NULL,
+--   `moduleId` uuid DEFAULT NULL,
+--   `score` int(2) DEFAULT NULL,
+--   KEY `fk_student_scores` (`studentsId`),
+--   KEY `fk_module_scores` (`moduleId`),
+--   CONSTRAINT `fk_module_scores` FOREIGN KEY (`moduleId`) REFERENCES `modules` (`id`),
+--   CONSTRAINT `fk_student_scores` FOREIGN KEY (`studentsId`) REFERENCES `students` (`id`) ON UPDATE CASCADE
+-- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+-- LOCK TABLES `scores` WRITE;
+-- /*!40000 ALTER TABLE `scores` DISABLE KEYS */;
+-- /*!40000 ALTER TABLE `scores` ENABLE KEYS */;
+-- UNLOCK TABLES;
 
 --
 -- Table structure for table `students`
@@ -290,44 +328,45 @@ INSERT INTO `students` VALUES
 /*!40000 ALTER TABLE `students` ENABLE KEYS */;
 UNLOCK TABLES;
 
---
--- Table structure for table `teachers`
---
+CREATE TABLE `student_cohorts` (
+  `id` uuid NOT NULL DEFAULT uuid(),
+  `studentId` uuid NOT NULL,
+  `periodId` uuid NOT NULL,
+  `sectionCode` varchar(1) NOT NULL COMMENT 'Seccion de origen (A/B). Historico.',
+  `courseId` uuid NOT NULL,
+  `enrollmentDate` datetime NOT NULL DEFAULT current_timestamp(),
+  `completionDate` datetime DEFAULT NULL,
+  `status` enum('En curso','Finalizado','Abandonado') NOT NULL DEFAULT 'En curso',
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_sc_course` FOREIGN KEY (`courseId`) REFERENCES `courses` (`id`),
+  CONSTRAINT `fk_sc_period` FOREIGN KEY (`periodId`) REFERENCES `periods` (`id`),
+  CONSTRAINT `fk_sc_student` FOREIGN KEY (`studentId`) REFERENCES `students` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 CREATE TABLE `teachers` (
   `id` uuid NOT NULL DEFAULT uuid(),
   `name` varchar(20) NOT NULL,
   `lastName` varchar(20) NOT NULL,
   `identification` int(11) unsigned NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `phone` int(10) UNSIGNED NOT NULL,
   `status` enum('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
-
-
-LOCK TABLES `teachers` WRITE;
-/*!40000 ALTER TABLE `teachers` DISABLE KEYS */;
-/*!40000 ALTER TABLE `teachers` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `teachers_modules`
 --
 
-CREATE TABLE `teachers_modules` (
-  `teacherId` uuid NOT NULL,
-  `moduleId` uuid NOT NULL,
-  `section` int(11) NOT NULL,
-  KEY `teachers_modules_modules_FK` (`moduleId`),
-  KEY `teachers_modules_teachers_FK` (`teacherId`),
-  CONSTRAINT `teachers_modules_modules_FK` FOREIGN KEY (`moduleId`) REFERENCES `modules` (`id`),
-  CONSTRAINT `teachers_modules_teachers_FK` FOREIGN KEY (`teacherId`) REFERENCES `teachers` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
-
-
-LOCK TABLES `teachers_modules` WRITE;
-/*!40000 ALTER TABLE `teachers_modules` DISABLE KEYS */;
-/*!40000 ALTER TABLE `teachers_modules` ENABLE KEYS */;
-UNLOCK TABLES;
+-- CREATE TABLE `teachers_modules` (
+--   `teacherId` uuid NOT NULL,
+--   `moduleId` uuid NOT NULL,
+--   `section` int(11) NOT NULL,
+--   KEY `teachers_modules_modules_FK` (`moduleId`),
+--   KEY `teachers_modules_teachers_FK` (`teacherId`),
+--   CONSTRAINT `teachers_modules_modules_FK` FOREIGN KEY (`moduleId`) REFERENCES `modules` (`id`),
+--   CONSTRAINT `teachers_modules_teachers_FK` FOREIGN KEY (`teacherId`) REFERENCES `teachers` (`id`)
+-- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 --
 -- Table structure for table `users`
@@ -339,7 +378,8 @@ CREATE TABLE `users` (
   `lastname` varchar(20) NOT NULL,
   `passwordSHA256` varchar(64) NOT NULL,
   `type` int(11) NOT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1
+  `active` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 
