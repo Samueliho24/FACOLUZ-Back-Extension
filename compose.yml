@@ -1,5 +1,5 @@
 services:
-  api:
+  extension-api:
     image: api 
     build: 
       dockerfile: Dockerfile
@@ -8,7 +8,7 @@ services:
         - api
     networks:
       extension: 
-        ipv4_address: 172.16.0.2
+        ipv4_address: 172.18.0.2
     ports: 
       - 3006:3006
     restart: always
@@ -16,7 +16,7 @@ services:
       PORT: 3006
       # Escribir secreto para encriptar (cadena de caracteres alfanumericos de 256 caracteres)
       SECRET: 
-      BDD_HOST: 172.16.0.3
+      BDD_HOST: 172.18.0.3
       BDD_USER: root
       # Escribir contraseña de la base de datos
       BDD_PASSWORD: 
@@ -25,7 +25,7 @@ services:
       BDD_TIMEOUT: 10000
       BDD_CONECTION_LIMITS: 25
 
-  db:
+  extension-db:
     image: db
     build:
       context: .
@@ -34,21 +34,17 @@ services:
         - db
     networks:
       extension: 
-        ipv4_address: 172.16.0.3
+        ipv4_address: 172.18.0.3
     restart: always
     environment:
       # A condinuacion escribir la contraseña de la base de datos
       MARIADB_ROOT_PASSWORD: 
     volumes: 
-      - db-data:/var/lib/mysql
+      - C:/extension-db:/var/lib/mysql
 
 networks:
   extension:
     ipam:
       driver: default
       config:
-        - subnet: 172.16.0.0/16
-
-volumes:
-  db-data:
-  db-files:
+        - subnet: 172.18.0.0/16
