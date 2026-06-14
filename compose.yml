@@ -24,6 +24,8 @@ services:
       BDD_PORT: 3306
       BDD_TIMEOUT: 10000
       BDD_CONECTION_LIMITS: 25
+    volumes:
+      - /home/jesus/dev-data/extension-files:/data
 
   extension-db:
     image: db
@@ -40,7 +42,7 @@ services:
       # A condinuacion escribir la contraseña de la base de datos
       MARIADB_ROOT_PASSWORD: 
     volumes: 
-      - C:/extension-db:/var/lib/mysql
+      - /home/jesus/dev-data/extension-db:/var/lib/mysql
 
 networks:
   extension:
