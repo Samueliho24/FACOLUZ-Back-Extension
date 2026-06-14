@@ -135,16 +135,10 @@ CREATE TABLE `invoices` (
   `comments` text DEFAULT NULL,
   `status` enum('Pendiente','Pagado') NOT NULL DEFAULT 'Pendiente',
   `StudentIdentification` int(11) NOT NULL,
+  `quantity` int(11) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
-
-LOCK TABLES `invoices` WRITE;
-/*!40000 ALTER TABLE `invoices` DISABLE KEYS */;
-INSERT INTO `invoices` VALUES
-('a7dba523-0f9e-11f1-9f8d-106530499799','Inscripcion',10,'2026-02-21 23:29:11',NULL,'Pendiente',1111);
-/*!40000 ALTER TABLE `invoices` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `modules`

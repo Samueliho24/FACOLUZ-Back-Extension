@@ -121,11 +121,11 @@ app.post('/api/verifyInvoice', mw.departmentWorker, async (req, res) => {
 })
 
 //Modificar para obtener citas por cedula de pagador
-app.get('/api/getInvoices/:patientId/:page', mw.departmentWorker, async (req, res) => {
-	const patientId = req.params.patientId
+app.get('/api/getInvoices/:studentId/:page', mw.departmentWorker, async (req, res) => {
+	const studentId = req.params.studentId
 	const page = Number(req.params.page)
 	try{
-		const dbResponse = await getInvoicesById(patientId, page)
+		const dbResponse = await getInvoicesById(studentId, page)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
@@ -783,7 +783,7 @@ app.get("/api/document/:studentId", mw.departmentWorker, async(req, res) => {
 app.get("/api/document/doc/:docId", async(req, res) => {
 	try{
 		const docId = req.params.docId
-		res.sendFile(`\\data\\documents\\${docId}.pdf`, {root: '/'})
+		res.sendFile(`/data/documents/${docId}.pdf`, {root: '/'})
 	}catch(err){
 		console.log(err)
 		res.status(500).send(err)

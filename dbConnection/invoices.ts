@@ -9,13 +9,22 @@ export async function getIdInvoice(){
 }
 
 //Obtener facturas por ID de paciente
-export async function getInvoicesById(patientId: string, page: number){	
+export async function getInvoicesById(studentId: string, page: number){	
     const res = await query(`
-        SELECT * FROM invoices
-        WHERE patientId = ?
+        SELECT 
+            i.id,
+            i.chargedAmount,
+            i.date,
+            i.status,
+            s.name,
+            s.lastname,
+            s.studentsIdentification
+        FROM invoices i JOIN students s
+        ON i.StudentIdentification = s.studentsIdentification
+        WHERE i.StudentIdentification = ?
         ORDER BY date DESC
         LIMIT 10 OFFSET ?
-    `, [ patientId, (page-1)*10])
+    `, [ studentId, (page-1)*10])
     return res	
 }
 
