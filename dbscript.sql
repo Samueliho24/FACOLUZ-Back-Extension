@@ -162,7 +162,7 @@ CREATE TABLE `modules` (
   `description` text NOT NULL,
   `evaluationMode` enum('Simple','Promedio') NOT NULL DEFAULT 'Simple' COMMENT 'Simple: 1 nota unica. Promedio: promedio ponderado de N notas parciales',
   `create_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `state` enum('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
+  `status` enum('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
