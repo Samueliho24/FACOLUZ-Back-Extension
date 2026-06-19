@@ -1,48 +1,48 @@
 services:
   extension-api:
-    image: api 
+    image: extension-api
     build: 
       dockerfile: Dockerfile
       context: .
       tags:
-        - api
+        - extension-api
     networks:
       extension: 
         ipv4_address: 172.18.0.2
     ports: 
-      - 3006:3006
+      - ${PORT}:${PORT}
     restart: always
     environment:
-      PORT: 3006
+      PORT: ${PORT}
       # Escribir secreto para encriptar (cadena de caracteres alfanumericos de 256 caracteres)
-      SECRET: 
+      SECRET: ${SECRET}
       BDD_HOST: 172.18.0.3
-      BDD_USER: root
+      BDD_USER: ${BDD_USER}
       # Escribir contraseña de la base de datos
-      BDD_PASSWORD: 
+      BDD_PASSWORD: ${BDD_PASSWORD}
       BDD_DATABASE: faco_luz_extension
-      BDD_PORT: 3306
-      BDD_TIMEOUT: 10000
-      BDD_CONECTION_LIMITS: 25
+      BDD_PORT: ${BDD_PORT}
+      BDD_TIMEOUT: ${BDD_TIMEOUT}
+      BDD_CONECTION_LIMITS: ${BDD_CONECTION_LIMITS}
     volumes:
-      - /home/jesus/dev-data/extension-files:/data
+      - ${VOLUME_API}:/data
 
   extension-db:
-    image: db
+    image: extension-db
     build:
       context: .
       dockerfile: Dockerfile-db
       tags: 
-        - db
+        - extension-db
     networks:
       extension: 
         ipv4_address: 172.18.0.3
     restart: always
     environment:
       # A condinuacion escribir la contraseña de la base de datos
-      MARIADB_ROOT_PASSWORD: 
+      MARIADB_ROOT_PASSWORD: ${BDD_PASSWORD}
     volumes: 
-      - /home/jesus/dev-data/extension-db:/var/lib/mysql
+      - ${VOLUME_DB}:/var/lib/mysql
 
 networks:
   extension:

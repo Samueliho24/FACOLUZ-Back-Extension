@@ -2,12 +2,14 @@ import { query, execute } from "../dbConnection.ts"
 import * as t from "../interfaces.ts"
 
 export async function openPeriod(data: t.newPeriod){
+    const startDate = new Date(data.startDate)
+    const endDate = new Date(data.startDate)
     const values = [
         data.year,
         data.period,
         data.modality,
-        data.startDate,
-        data.endDate
+        `${startDate.getFullYear()}-${startDate.getMonth()+1}-${startDate.getDate()}`,
+        `${endDate.getFullYear()}-${endDate.getMonth()+1}-${endDate.getDate()}`
     ]
     const res = await execute(`
         INSERT INTO periods(year, period, modality,startDate, endDate)
