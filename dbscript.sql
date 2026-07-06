@@ -127,18 +127,33 @@ CREATE TABLE `enrollment_partial_scores` (
 -- Table structure for table `invoices`
 --
 
+CREATE TABLE `billables` (
+  `id` uuid NOT NULL DEFAULT uuid(),
+  `name` text NOT NULL,
+  `price` float NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+INSERT INTO `billables`(`name`, `price`) VALUES
+  ('Inscripcion', 5),
+  ('Materia', 5),
+  ('Actividad especial', 5),
+  ('Reimpresion de certificado', 5);
+
 CREATE TABLE `invoices` (
   `id` uuid NOT NULL DEFAULT uuid(),
-  `billableitem` enum('Inscripcion','Materia','Actividad especial','Reimpresion de certificado') NOT NULL,
+  `billableid` uuid NOT NULL,
   `chargedAmount` float NOT NULL,
+  `exchangeRate` float NOT NULL,
   `date` datetime NOT NULL DEFAULT current_timestamp(),
   `comments` text DEFAULT NULL,
   `status` enum('Pendiente','Pagado') NOT NULL DEFAULT 'Pendiente',
   `StudentIdentification` int(11) NOT NULL,
   `quantity` int(11) NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_invoices_billable` FOREIGN KEY (`billableid`) REFERENCES `billable` (`id`)
 
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 --
 -- Table structure for table `modules`
@@ -216,14 +231,15 @@ UNLOCK TABLES;
 CREATE TABLE `payments` (
   `id` uuid NOT NULL DEFAULT uuid(),
   `invoiceId` uuid NOT NULL,
-  `receivedPaymentMethod` enum('efectivo','Exoneracion') NOT NULL,
-  `returnedPaymentMethod` enum('efectivo','Exoneracion') NOT NULL,
+  `receivedPaymentMethod` enum('Transferencia','Efectivo','Exoneracion') NOT NULL,
+  `returnedPaymentMethod` enum('Transferencia','Efectivo','Exoneracion') NOT NULL,
   `paidAmount` float NOT NULL,
-  `returnedAmount` float NOT NULL,
+  `returnedAmount` float NOT NULL DEFAULT 0,
   `reference` varchar(20) DEFAULT NULL,
+  `returnreference` varchar(20) DEFAULT NULL,
   `comments` text DEFAULT NULL,
   `date` datetime NOT NULL DEFAULT current_timestamp(),
-  `changeRate` float NOT NULL,
+  `exchangeRate` float NOT NULL,
   PRIMARY KEY (`id`),
   KEY `payments_invoices_FK` (`invoiceId`),
   CONSTRAINT `payments_invoices_FK` FOREIGN KEY (`invoiceId`) REFERENCES `invoices` (`id`)
