@@ -95,6 +95,7 @@ app.get('/api/getinvoicesVerification/:page', mw.departmentWorker, async (req, r
 		res.status(404).send('Error del servidor, No pudo traer facturas por verificar')
 	}
 })
+
 //Obtener facturas por verificar y por ID de paciente
 app.get('/api/getInvoicesVerificationById/:patientId/:page', mw.departmentWorker, async (req, res) => {
 	const patientId = req.params.patientId
@@ -107,6 +108,7 @@ app.get('/api/getInvoicesVerificationById/:patientId/:page', mw.departmentWorker
 		res.status(404).send('Error del servidor, No pudo traer facturas deacuerdo al ID proporcionado')
 	}
 })
+
 //Verificar factura
 app.post('/api/verifyInvoice', mw.departmentWorker, async (req, res) => {
 	const {idParam, status} = req.body
@@ -132,6 +134,7 @@ app.get('/api/getInvoices/:studentId/:page', mw.departmentWorker, async (req, re
 	}
 })
 
+//Obtener todas las facturas
 app.get('/api/getInvoices/:page', mw.departmentWorker, async (req, res) => {
 	const page = Number(req.params.page)
 	try{
@@ -143,6 +146,7 @@ app.get('/api/getInvoices/:page', mw.departmentWorker, async (req, res) => {
 	}
 })
 
+//Emitir reporte diario
 app.get('/api/getDailyReport', mw.departmentWorker, async (req, res) => {
 	try{
 

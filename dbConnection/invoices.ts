@@ -14,6 +14,7 @@ export async function getInvoicesById(studentId: string, page: number){
         SELECT 
             i.id,
             i.chargedAmount,
+            i.exchangeRate,
             i.date,
             i.status,
             s.name,
@@ -33,6 +34,7 @@ export async function getAllinvoices(page: number){
         SELECT 
             i.id,
             i.chargedAmount,
+            i.exchangeRate,
             i.date,
             i.status,
             s.name,
@@ -48,7 +50,7 @@ export async function getAllinvoices(page: number){
 
 export async function getinvoicesVerification(page: number){	
     const res = await query(`
-        SELECT * FROM invoices WHERE status = 'Por verificar'
+        SELECT * FROM invoices WHERE status = 'Pendiente'
         ORDER BY date DESC
         LIMIT 10 OFFSET ?
     `, [(page-1)*10])
@@ -58,7 +60,7 @@ export async function getinvoicesVerification(page: number){
 export async function getinvoicesVerificationById(patientId: string, page: number){	
     const res = await query(`
         SELECT * FROM invoices
-        WHERE patientId = ? AND status = 'Por verificar'
+        WHERE patientId = ? AND status = 'Pendiente'
         ORDER BY date DESC
         LIMIT 10 OFFSET ?
     `, [ patientId, (page-1)*10])
