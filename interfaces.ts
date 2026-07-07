@@ -14,9 +14,10 @@ export interface loginData{
 
 export interface invoiceData{
     studentIdentification: number,
-    billableitem: number,
+    billableid: string,
     quantity: number,
     chargedAmount: number,
+    exchangeRate: number,
     comment: string
 }
 

@@ -69,9 +69,8 @@ app.get('/api/getIdInvoice', mw.departmentWorker, async (req, res) => {
 	}
 })
 
+//Crear factura
 app.post('/api/issueInvoice', mw.departmentWorker, async (req, res) => {
-	const token = req.headers.authorization.split(" ")[1]
-	const payload = jwt.verify(token, secret)
 	try {
 		const dbResponse = await issueInvoice(req.body)
 		if(dbResponse === true){

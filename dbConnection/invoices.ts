@@ -75,22 +75,24 @@ export async function verifyInvoice(idParam: number, status: string,){
 }
 
 export async function issueInvoice(data: t.invoiceData){
-    const {studentIdentification, billableitem, quantity, chargedAmount, comment } = data
+    const {studentIdentification, billableid, quantity, chargedAmount, comment, exchangeRate } = data
     if (await studentExist(studentIdentification)){
         const _res = await execute(`
             INSERT INTO invoices(
                 StudentIdentification,
-                billableItem,
+                billableid,
                 quantity,
                 chargedAmount,
-                comments
-            ) VALUES (?, ?, ?, ?, ?)    
+                comments,
+                exchangeRate
+            ) VALUES (?, ?, ?, ?, ?, ?)    
         `, [
             studentIdentification,
-            billableitem,
+            billableid,
             quantity,
             chargedAmount,
-            comment
+            comment,
+            exchangeRate
         ])
         return true
     }else{
