@@ -595,6 +595,7 @@ app.get("/api/certificateList/", mw.departmentWorker, async(req, res) => {
 	}
 })
 
+//Obtener pagos para una factura
 app.get("/api/payments/:invoiceId", mw.departmentWorker, async(req, res) => {
 	try{
 		const invoiceId = req.params.invoiceId
@@ -606,11 +607,16 @@ app.get("/api/payments/:invoiceId", mw.departmentWorker, async(req, res) => {
 	}
 })
 
+//Abonar a una factura
 app.post("/api/payments", mw.departmentWorker, async(req, res) => {
 	try{
 		const data: t.IPayment = req.body
-		const _dbResponse = await makePayment(data)
-		res.status(201).send()
+		const paymentResult = await makePayment(data)
+		if(paymentResult === true){
+			res.status(202).send()
+		}else{
+			res.status(201).send()
+		}
 	}catch(err){
 		console.log(err)
 		res.status(500).send(err)

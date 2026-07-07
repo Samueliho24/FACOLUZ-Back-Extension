@@ -14,7 +14,7 @@ const db = mariadb.createPool({
 	connectionLimit: Number(Deno.env.get("BDD_CONECTION_LIMITS"))
 })
 
-export async function query(query: string, params?: object) {
+export async function query(query: string, params?: object){
 	let connection
 	try{
 		connection = await db.getConnection()

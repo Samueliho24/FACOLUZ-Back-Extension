@@ -47,9 +47,10 @@ export interface IPayment{
     paymentMethod: number,
     changeAmount: number,
     changeMethod: number,
+    exchangeRate: number,
     reference?: string,
+    returnReference?: string,
     comments?: string,
-    changeRate: number
 }
 
 export interface newTeacher {

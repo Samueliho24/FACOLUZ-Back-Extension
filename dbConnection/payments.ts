@@ -10,9 +10,6 @@ export const getPaymentsByInvoice = async(invoiceId: string) => {
 
 //Realizar el abono correspondiente y luego revisar si la deuda esta saldada
 export const makePayment = async(data: t.IPayment) => {
-    if(data.paymentMethod == 1 || data.paymentMethod == 2){
-        data.paymentAmmount = Number((data.paymentAmmount / data.changeRate).toFixed(2))
-    }
     const _res0 = await execute(`
         INSERT INTO payments(
             invoiceId,
@@ -20,37 +17,62 @@ export const makePayment = async(data: t.IPayment) => {
             receivedPaymentMethod,
             returnedAmount,
             returnedPaymentMethod,
-            changeRate,
+            exchangeRate,
             reference,
+            returnReference,
             comments
-        ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)    
+        ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)    
     `, [
         data.InvoiceId,
         data.paymentAmmount,
         data.paymentMethod,
         data.changeAmount,
         data.changeMethod,
-        data.changeRate,
+        data.exchangeRate,
         (data.reference ? data.reference : null),
-        (data.comments ? data.comments : null),
+        (data.returnReference ? data.returnReference : null),
+        (data.comments ? data.comments : null)
     ])
 
-    const remainingAmount = await query(`
-        SELECT chargedAmount FROM invoices WHERE id = ?    
-    `, [data.InvoiceId])
-
     const paymentsList = await query(`
-        SELECT paidAmount FROM payments WHERE invoiceId = ?    
+        SELECT 
+            paidAmount,
+            returnedAmount,
+            receivedPaymentMethod,
+            returnedPaymentMethod,
+            exchangeRate
+        FROM payments WHERE invoiceId = ?    
     `, [data.InvoiceId])
 
     let totalPaid = 0;
     paymentsList.forEach((element: any) => {
-        totalPaid += element.paidAmount;
+        if(element.receivedPaymentMethod === 3){
+            totalPaid += element.paidAmount
+        }else{
+            let paidOnDolars = Number(element.paidAmount / element.exchangeRate);
+            totalPaid += paidOnDolars;
+        }
+
+        if(element.returnedPaymentMethod === 3){
+            totalPaid -= element.paidAmount
+        }else{
+            let returnedOnDolars = Number(element.returnedAmount / element.exchangeRate);
+            totalPaid -= returnedOnDolars;
+        }
     });
 
-    if(totalPaid >= remainingAmount[0].chargedAmount){
+    const resTotalToPay = await query(`
+        SELECT chargedAmount, exchangeRate FROM invoices WHERE id = ?    
+    `, [data.InvoiceId])
+
+    let totalToPay = resTotalToPay[0].chargedAmount / resTotalToPay[0].exchangeRate;
+
+    if(totalPaid >= totalToPay){
         const _res1 = await execute(`
             UPDATE invoices SET status = 'Pagado' WHERE id = ?
         `, [data.InvoiceId])
+        return true
+    }else{
+        return false
     }
 }
