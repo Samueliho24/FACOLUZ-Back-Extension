@@ -22,6 +22,7 @@ import { filterTeachers, getTeachers, registerTeacher,deactivateTeacher } from "
 import { loadScores, getScoreByStudent, updateScore, getGradeStudentsBySection } from "./dbConnection/scores.ts";
 import { getDocumentsList, saveDocument } from "./dbConnection/documents.ts"
 import { getAllUsers, createNewUser, updatePassword, updateUser } from "./dbConnection/users.ts";
+import { GetBillables } from "./dbConnection/billables.ts";
 import { randomUUID } from "node:crypto";
 
 const port = Deno.env.get("PORT")
@@ -55,6 +56,16 @@ app.post('/api/login', async (req, res) => {
 	}catch(err){
 		console.log(err)
 		res.status(500).send('error del servidor')
+	}
+})
+
+app.get('/api/billables', mw.departmentWorker, async (req, res) => {
+	try{	
+		const dbResponse = await GetBillables()
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
 	}
 })
 
