@@ -41,15 +41,22 @@ export async function execute(query: string, params?: object) {
 	}
 }
 
-// export async function setSettings(){
+export async function transaction(queries: string[], params?: object[]){
+	let connection
+	try{
+		connection = await db.getConnection()
+		await connection.beginTransaction()
 
-// }
+		for(let i = 0; i <= queries.length - 1; i++){
+			await connection.execute(queries[i], params[i] ?? [])
+		}
 
-// export async function getSettings(){
-// 	const res = await query(`
-// 		SELECT * from settings
-// 		WHERE 
-// 			label != 'startedPeriod' 
-// 	`)
-// 	return res
-// }
+		await connection.commit()
+	}catch(err){
+		console.log(err)
+		await connection?.rollback()
+		throw err
+	}finally{
+		await connection?.release()
+	}
+}
