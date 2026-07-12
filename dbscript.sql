@@ -151,7 +151,7 @@ CREATE TABLE `invoices` (
   `StudentIdentification` int(11) NOT NULL,
   `quantity` int(11) NOT NULL,
   PRIMARY KEY (`id`),
-  CONSTRAINT `fk_invoices_billable` FOREIGN KEY (`billableid`) REFERENCES `billable` (`id`)
+  CONSTRAINT `fk_invoices_billable` FOREIGN KEY (`billableid`) REFERENCES `billables` (`id`)
 
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
