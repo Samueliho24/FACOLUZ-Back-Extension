@@ -24,10 +24,10 @@ export const makePayment = async(data: t.IPayment) => {
         ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)    
     `, [
         data.InvoiceId,
-        data.paymentAmmount,
-        data.paymentMethod,
-        data.changeAmount,
-        data.changeMethod,
+        data.paidAmount,
+        data.receivedPaymentMethod,
+        data.returnedAmount,
+        data.returnedPaymentMethod,
         data.exchangeRate,
         (data.reference ? data.reference : null),
         (data.returnReference ? data.returnReference : null),

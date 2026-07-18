@@ -81,15 +81,15 @@ app.put('/api/prices', mw.departmentChief, async (req, res) => {
 })
 
 //Obtener el numero de Factura a emitir
-app.get('/api/getIdInvoice', mw.departmentWorker, async (req, res) => {
-	try{
-		const dbResponse = await getIdInvoice()
-		res.status(200).send(dbResponse)
-	}catch(err){
-		console.log(err)
-		res.status(500).send('error del servidor')
-	}
-})
+// app.get('/api/getIdInvoice', mw.departmentWorker, async (req, res) => {
+// 	try{
+// 		const dbResponse = await getIdInvoice()
+// 		res.status(200).send(dbResponse)
+// 	}catch(err){
+// 		console.log(err)
+// 		res.status(500).send('error del servidor')
+// 	}
+// })
 
 //Crear factura
 app.post('/api/issueInvoice', mw.departmentWorker, async (req, res) => {
@@ -118,7 +118,7 @@ app.get('/api/getinvoicesVerification/:page', mw.departmentWorker, async (req, r
 	}
 })
 
-//Obtener facturas por verificar y por ID de paciente
+//Obtener facturas por verificar y por ID de estudiante
 app.get('/api/getInvoicesVerificationById/:patientId/:page', mw.departmentWorker, async (req, res) => {
 	const patientId = req.params.patientId
 	const page = Number(req.params.page)
@@ -132,16 +132,16 @@ app.get('/api/getInvoicesVerificationById/:patientId/:page', mw.departmentWorker
 })
 
 //Verificar factura
-app.post('/api/verifyInvoice', mw.departmentWorker, async (req, res) => {
-	const {idParam, status} = req.body
-	try{
-		const dbResponse = await verifyInvoice(idParam, status)
-		res.status(200).send('La factura ha sido verificada con exitosamente')
-	}catch(err){
-		console.log(err)
-		res.status(500).send('Error del servidor, No pudo actualizar el estado de la factura')
-	}
-})
+// app.post('/api/verifyInvoice', mw.departmentWorker, async (req, res) => {
+// 	const {idParam, status} = req.body
+// 	try{
+// 		const dbResponse = await verifyInvoice(idParam, status)
+// 		res.status(200).send('La factura ha sido verificada con exitosamente')
+// 	}catch(err){
+// 		console.log(err)
+// 		res.status(500).send('Error del servidor, No pudo actualizar el estado de la factura')
+// 	}
+// })
 
 //Modificar para obtener citas por cedula de pagador
 app.get('/api/getInvoices/:studentId/:page', mw.departmentWorker, async (req, res) => {

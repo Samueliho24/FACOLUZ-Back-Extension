@@ -17,6 +17,7 @@ export async function getInvoicesById(studentId: string, page: number){
             i.exchangeRate,
             i.date,
             i.status,
+            i.comments,
             s.name,
             s.lastname,
             s.studentsIdentification
@@ -37,6 +38,7 @@ export async function getAllinvoices(page: number){
             i.exchangeRate,
             i.date,
             i.status,
+            i.comments,
             s.name,
             s.lastname,
             s.studentsIdentification

@@ -43,10 +43,10 @@ export interface newPeriod{
 
 export interface IPayment{
     InvoiceId: string,
-    paymentAmmount: number,
-    paymentMethod: number,
-    changeAmount: number,
-    changeMethod: number,
+    paidAmount: number,
+    receivedPaymentMethod: string,
+    returnedAmount: number,
+    returnedPaymentMethod: string,
     exchangeRate: number,
     reference?: string,
     returnReference?: string,
