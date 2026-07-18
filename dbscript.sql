@@ -231,10 +231,10 @@ UNLOCK TABLES;
 CREATE TABLE `payments` (
   `id` uuid NOT NULL DEFAULT uuid(),
   `invoiceId` uuid NOT NULL,
-  `receivedPaymentMethod` enum('Transferencia','Efectivo','Dolares','Exoneracion') NOT NULL,
-  `returnedPaymentMethod` enum('Transferencia','Efectivo','Dolares','Exoneracion') NOT NULL,
+  `receivedPaymentMethod` enum('Efectivo','Transferencia','Dolares','Exoneracion') NOT NULL,
+  `returnedPaymentMethod` enum('Efectivo','Transferencia','Dolares','Exoneracion'),
   `paidAmount` float NOT NULL,
-  `returnedAmount` float NOT NULL DEFAULT 0,
+  `returnedAmount` float DEFAULT 0,
   `reference` varchar(20) DEFAULT NULL,
   `returnReference` varchar(20) DEFAULT NULL,
   `comments` text DEFAULT NULL,
