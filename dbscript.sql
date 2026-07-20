@@ -147,7 +147,7 @@ CREATE TABLE `invoices` (
   `exchangeRate` float NOT NULL,
   `date` datetime NOT NULL DEFAULT current_timestamp(),
   `comments` text DEFAULT NULL,
-  `status` enum('Pendiente','Pagado') NOT NULL DEFAULT 'Pendiente',
+  `status` enum('Pendiente','Pagado','Anulado','Anulacion') NOT NULL DEFAULT 'Pendiente',
   `StudentIdentification` int(11) NOT NULL,
   `quantity` int(11) NOT NULL,
   PRIMARY KEY (`id`),
@@ -231,7 +231,7 @@ UNLOCK TABLES;
 CREATE TABLE `payments` (
   `id` uuid NOT NULL DEFAULT uuid(),
   `invoiceId` uuid NOT NULL,
-  `receivedPaymentMethod` enum('Efectivo','Transferencia','Dolares','Exoneracion') NOT NULL,
+  `receivedPaymentMethod` enum('Efectivo','Transferencia','Dolares','Exoneracion'),
   `returnedPaymentMethod` enum('Efectivo','Transferencia','Dolares','Exoneracion'),
   `paidAmount` float NOT NULL,
   `returnedAmount` float DEFAULT 0,

@@ -11,7 +11,7 @@ import { login } from "./dbConnection/system.ts"
 import { getCertificateInfo, getCertificateList } from "./dbConnection/certificates.ts"
 import { filterCourses, getAllCourses, setCourse, updateAssignedModulesForCourse } from "./dbConnection/courses.ts"
 import { getLastEnrollmentByStudentId, registerEnrollment, updateEnrollmentState, getStudentCohorts, createStudentCohort, getEnrollmentHistory,getApprovedModulesByStudent, getEnrollmentCountBySection } from "./dbConnection/enrollments.ts"
-import { getAllinvoices, getCurrentDayInvoices, getIdInvoice, getInvoicesById, getInvoicesByPayer, getinvoicesVerification, getinvoicesVerificationById, issueInvoice, verifyInvoice } from "./dbConnection/invoices.ts"
+import { getAllinvoices, getCurrentDayInvoices, getIdInvoice, getInvoicesById, getInvoicesByPayer, getinvoicesVerification, getinvoicesVerificationById, issueInvoice, verifyInvoice, cancelInvoice } from "./dbConnection/invoices.ts"
 import { deactivateModule, filterModules, getAllModules, getAssignedModulesByCourse, getSearchedModule, setModule, getModulesByCourse } from "./dbConnection/modules.ts"
 import { getPaymentsByInvoice, makePayment } from "./dbConnection/payments.ts"
 import { changeEndDatePeriod, closePeriod, getCurrentPeriod, openPeriod, getPeriods, getActivePeriods, getPeriodById} from "./dbConnection/period.ts"
@@ -639,6 +639,17 @@ app.post("/api/payments", mw.departmentWorker, async(req, res) => {
 		}else{
 			res.status(201).send()
 		}
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.delete("/api/invoice/:invoiceId", mw.departmentWorker, async(req, res) => {
+	try{
+		const invoiceId: string = req.params.invoiceId;
+		const dbResponse = await cancelInvoice(invoiceId)
+		res.status(200).send()
 	}catch(err){
 		console.log(err)
 		res.status(500).send(err)

@@ -1,5 +1,7 @@
-import { query, execute } from "../dbConnection.ts"
+import { query, execute, transaction } from "../dbConnection.ts"
+import { totalizePayments } from "../functions/totalizePayments.ts";
 import * as t from "../interfaces.ts"
+import { getPaymentsByInvoice } from "./payments.ts";
 import { studentExist } from "./students.ts";
 
 //Obtener el ID de la siguiente factura a emitir (probar si este enfoque funciona correctamente)
@@ -137,4 +139,28 @@ export async function getInvoicesByPayer(page: number, identification: number){
 		LIMIT 10 OFFSET ?	
 	`, [identification, ((page-1)*10)])
 	return res
+}
+
+export async function cancelInvoice(invoiceId: string){
+    const payments = await getPaymentsByInvoice(invoiceId)
+
+    let ammountToReturn = totalizePayments(payments);
+    
+    const queries = [
+        `UPDATE invoices SET status = 'Anulada' WHERE id = ?`,
+        `INSERT INTO payments(
+            invoiceId,
+            paidAmount,
+            returnedAmount
+        ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ]
+
+    const params = [
+        invoiceId,
+        invoiceId,
+        0,
+        ammountToReturn
+    ]
+
+    const _DbResponse = await transaction(queries, params);
 }

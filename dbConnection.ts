@@ -41,7 +41,7 @@ export async function execute(query: string, params?: object) {
 	}
 }
 
-export async function transaction(queries: string[], params?: object[]){
+export async function transaction(queries: string[], params?: any[]){
 	let connection
 	try{
 		connection = await db.getConnection()

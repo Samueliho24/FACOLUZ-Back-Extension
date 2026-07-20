@@ -1,4 +1,5 @@
 import { query, execute } from "../dbConnection.ts"
+import { totalizePayments } from "../functions/totalizePayments.ts";
 import * as t from "../interfaces.ts"
 
 export const getPaymentsByInvoice = async(invoiceId: string) => {
@@ -44,22 +45,7 @@ export const makePayment = async(data: t.IPayment) => {
         FROM payments WHERE invoiceId = ?    
     `, [data.InvoiceId])
 
-    let totalPaid = 0;
-    paymentsList.forEach((element: any) => {
-        if(element.receivedPaymentMethod === 3){
-            totalPaid += element.paidAmount
-        }else{
-            let paidOnDolars = Number(element.paidAmount / element.exchangeRate);
-            totalPaid += paidOnDolars;
-        }
-
-        if(element.returnedPaymentMethod === 3){
-            totalPaid -= element.paidAmount
-        }else{
-            let returnedOnDolars = Number(element.returnedAmount / element.exchangeRate);
-            totalPaid -= returnedOnDolars;
-        }
-    });
+    let totalPaid = totalizePayments(paymentsList);
 
     const resTotalToPay = await query(`
         SELECT chargedAmount, exchangeRate FROM invoices WHERE id = ?    
