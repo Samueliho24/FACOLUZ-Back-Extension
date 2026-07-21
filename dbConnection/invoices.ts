@@ -1,4 +1,5 @@
 import { query, execute, transaction } from "../dbConnection.ts"
+import { getDolarPrice } from "../functions/getDolarPrice.ts";
 import { totalizePayments } from "../functions/totalizePayments.ts";
 import * as t from "../interfaces.ts"
 import { getPaymentsByInvoice } from "./payments.ts";
@@ -145,21 +146,26 @@ export async function cancelInvoice(invoiceId: string){
     const payments = await getPaymentsByInvoice(invoiceId)
 
     let ammountToReturn = totalizePayments(payments);
+    let dolarPrice = await getDolarPrice()
     
     const queries = [
-        `UPDATE invoices SET status = 'Anulada' WHERE id = ?`,
+        `UPDATE invoices SET status = 'Anulado' WHERE id = ?`,
         `INSERT INTO payments(
             invoiceId,
             paidAmount,
-            returnedAmount
-        ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            returnedAmount,
+            exchangeRate
+        ) VALUES(?, ?, ?, ?)`
     ]
 
     const params = [
-        invoiceId,
-        invoiceId,
-        0,
-        ammountToReturn
+        [invoiceId],
+        [
+            invoiceId,
+            0,
+            ammountToReturn,
+            dolarPrice
+        ]
     ]
 
     const _DbResponse = await transaction(queries, params);

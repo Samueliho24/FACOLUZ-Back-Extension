@@ -635,7 +635,7 @@ app.post("/api/payments", mw.departmentWorker, async(req, res) => {
 		const data: t.IPayment = req.body
 		const paymentResult = await makePayment(data)
 		if(paymentResult === true){
-			res.status(202).send()
+			res.status(200).send()
 		}else{
 			res.status(201).send()
 		}
