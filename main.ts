@@ -648,7 +648,7 @@ app.post("/api/payments", mw.departmentWorker, async(req, res) => {
 app.delete("/api/invoice/:invoiceId", mw.departmentWorker, async(req, res) => {
 	try{
 		const invoiceId: string = req.params.invoiceId;
-		const dbResponse = await cancelInvoice(invoiceId)
+		const _dbResponse = await cancelInvoice(invoiceId)
 		res.status(200).send()
 	}catch(err){
 		console.log(err)

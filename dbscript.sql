@@ -147,7 +147,7 @@ CREATE TABLE `invoices` (
   `exchangeRate` float NOT NULL,
   `date` datetime NOT NULL DEFAULT current_timestamp(),
   `comments` text DEFAULT NULL,
-  `status` enum('Pendiente','Pagado','Anulado','Anulacion') NOT NULL DEFAULT 'Pendiente',
+  `status` enum('Pendiente','Pagado','Anulada') NOT NULL DEFAULT 'Pendiente',
   `StudentIdentification` int(11) NOT NULL,
   `quantity` int(11) NOT NULL,
   PRIMARY KEY (`id`),

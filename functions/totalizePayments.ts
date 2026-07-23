@@ -1,18 +1,12 @@
-export function totalizePayments(paymentsList){
+export function totalizePayments(paymentsList: any){
     let totalPaid = 0;
     paymentsList.forEach((element: any) => {
-        if(element.receivedPaymentMethod === 3){
+        if(element.receivedPaymentMethod !== 4){
             totalPaid += element.paidAmount
-        }else{
-            let paidOnDolars = Number(element.paidAmount / element.exchangeRate);
-            totalPaid += paidOnDolars;
         }
 
-        if(element.returnedPaymentMethod === 3){
-            totalPaid -= element.paidAmount
-        }else{
-            let returnedOnDolars = Number(element.returnedAmount / element.exchangeRate);
-            totalPaid -= returnedOnDolars;
+        if(element.returnedAmount !== null && element.returnedPaymentMethod !== 4){
+            totalPaid -= element.returnedAmount
         }
     });
     return totalPaid;

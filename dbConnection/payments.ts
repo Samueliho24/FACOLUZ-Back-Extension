@@ -25,9 +25,9 @@ export const makePayment = async(data: t.IPayment) => {
         ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)    
     `, [
         data.InvoiceId,
-        data.paidAmount,
+        Number(data.paidAmount).toFixed(2),
         data.receivedPaymentMethod,
-        data.returnedAmount,
+        Number(data.returnedAmount).toFixed(2),
         data.returnedPaymentMethod,
         data.exchangeRate,
         (data.reference ? data.reference : null),
@@ -48,10 +48,10 @@ export const makePayment = async(data: t.IPayment) => {
     let totalPaid = totalizePayments(paymentsList);
 
     const resTotalToPay = await query(`
-        SELECT chargedAmount, exchangeRate FROM invoices WHERE id = ?    
+        SELECT chargedAmount FROM invoices WHERE id = ?    
     `, [data.InvoiceId])
 
-    let totalToPay = resTotalToPay[0].chargedAmount / resTotalToPay[0].exchangeRate;
+    let totalToPay = resTotalToPay[0].chargedAmount;
 
     if(totalPaid >= totalToPay){
         const _res1 = await execute(`

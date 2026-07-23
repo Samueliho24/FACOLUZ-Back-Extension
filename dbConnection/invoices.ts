@@ -149,13 +149,15 @@ export async function cancelInvoice(invoiceId: string){
     let dolarPrice = await getDolarPrice()
     
     const queries = [
-        `UPDATE invoices SET status = 'Anulado' WHERE id = ?`,
+        `UPDATE invoices SET status = 'Anulada' WHERE id = ?`,
         `INSERT INTO payments(
             invoiceId,
             paidAmount,
             returnedAmount,
-            exchangeRate
-        ) VALUES(?, ?, ?, ?)`
+            exchangeRate,
+            comments,
+            returnedPaymentMethod
+        ) VALUES(?, ?, ?, ?, ?, ?)`
     ]
 
     const params = [
@@ -163,8 +165,10 @@ export async function cancelInvoice(invoiceId: string){
         [
             invoiceId,
             0,
-            ammountToReturn,
-            dolarPrice
+            Number(ammountToReturn).toFixed(2),
+            dolarPrice,
+            "Devolucion por anulacion",
+            "Dolares"
         ]
     ]
 
