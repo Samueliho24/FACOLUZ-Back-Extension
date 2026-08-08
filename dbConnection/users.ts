@@ -1,7 +1,7 @@
 import { query, execute } from "../dbConnection.ts";
 import { IUser } from "../types/IUser.ts"
 
-export async function getAllUsers(){
+export async function getAllUsers(page: number){
     const res = await query(`
         SELECT 
             id,
@@ -9,8 +9,9 @@ export async function getAllUsers(){
             lastname,
             type,
             active
-        FROM users	
-    `)
+        FROM users
+        LIMIT 10 OFFSET ?
+    `, [(page-1)*10])
 
     return res;
 }

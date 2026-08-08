@@ -56,7 +56,7 @@ CREATE TABLE `changelogs` (
 CREATE TABLE `courses` (
   `id` uuid NOT NULL DEFAULT uuid(),
   `description` text NOT NULL,
-  `state` enum('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
+  `status` enum('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
   `create_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -83,7 +83,7 @@ CREATE TABLE `enrollments` (
   `cohortId` uuid NOT NULL,
   `enrollmentType` enum('Regular','Repitiente') NOT NULL DEFAULT 'Regular',
   `parentEnrollmentId` uuid DEFAULT NULL COMMENT 'Si es repitiente, ID de la inscripcion original que reprobo',
-  `dateEnrollments` datetime NOT NULL DEFAULT current_timestamp(),
+  `dateEnrollment` datetime NOT NULL DEFAULT current_timestamp(),
   `status` enum('Pagada','Deuda') NOT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_student_enrollment` (`studentId`),
@@ -263,7 +263,7 @@ CREATE TABLE `periods` (
   `startDate` date NOT NULL,
   `endDate` date NOT NULL,
   `create_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `state` enum('En curso','Finalizado') NOT NULL DEFAULT 'En curso',
+  `status` enum('En curso','Finalizado') NOT NULL DEFAULT 'En curso',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -322,7 +322,7 @@ CREATE TABLE `students` (
   `address` text NOT NULL,
   `instructionGrade` enum('Ninguno','Bachillerato','Universitario','Postgrado') NOT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `state` enum('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
+  `status` enum('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
   `section` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `studentsId` (`studentsIdentification`)
