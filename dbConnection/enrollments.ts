@@ -196,3 +196,34 @@ export async function getEnrollmentCountBySection(sectionId: string) {
     `, [sectionId]);
     return res[0]?.enrolledCount || 0;
 }
+
+export async function verifyAndUpdateEnrollment(invoiceId: string){
+    interface ires0{
+        studentsId: string,
+        billable: string
+    }
+
+    const res0: ires0 = (await query(`
+        SELECT 
+            b.name AS billable,
+            s.Id AS studentsId
+        FROM invoices i
+        JOIN billables b ON i.billableid = b.id
+        JOIN students s ON i.StudentIdentification = s.studentsIdentification
+        WHERE i.id = ?
+    `, [invoiceId]))[0]
+
+    console.log(res0);
+    console.log(res0.billable == "Inscripcion")
+    console.log(res0.billable === "Inscripcion")
+
+    if(res0.billable == "Inscripcion"){
+        const enrrollment = await execute(`
+            UPDATE enrollments SET status = 'Pagada' WHERE studentId = ?
+        `, [res0.studentsId])
+
+        return;
+    }else{
+        return;
+    }
+}

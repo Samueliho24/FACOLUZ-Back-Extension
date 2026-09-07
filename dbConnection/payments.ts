@@ -1,6 +1,7 @@
 import { query, execute } from "../dbConnection.ts"
 import { totalizePayments } from "../functions/totalizePayments.ts";
 import * as t from "../interfaces.ts"
+import { verifyAndUpdateEnrollment } from "./enrollments.ts";
 
 export const getPaymentsByInvoice = async(invoiceId: string) => {
     const res = await query(`
@@ -10,6 +11,9 @@ export const getPaymentsByInvoice = async(invoiceId: string) => {
 }
 
 //Realizar el abono correspondiente y luego revisar si la deuda esta saldada
+//Al finalizar corregir este endpoint, no tiene atomicidad
+//Si hay alguna falla se puede registrar un pago sin actualizar los estados de deuda a pagado
+//Utilizar transacciones
 export const makePayment = async(data: t.IPayment) => {
     const _res0 = await execute(`
         INSERT INTO payments(
@@ -57,6 +61,7 @@ export const makePayment = async(data: t.IPayment) => {
         const _res1 = await execute(`
             UPDATE invoices SET status = 'Pagado' WHERE id = ?
         `, [data.InvoiceId])
+        verifyAndUpdateEnrollment(data.InvoiceId)   //incluir este proceso en la transaccion
         return true
     }else{
         return false
