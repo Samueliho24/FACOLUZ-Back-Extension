@@ -30,10 +30,10 @@ export function BuildReport(dataCallback, endCallback, invoiceList: Iinvoice[]){
     .stroke();
 
     doc.text(" ", 75, 150)
-    doc.text(`Detalle de transacciones:`)
+    doc.text(`Detalle de facturas emitidas:`)
     doc.table({
         data: [
-            ["Cedula", "Nombre", "Concepto", "Monto", "Tasa", "Fecha", "Metodo de pago"],
+            ["Cedula", "Nombre", "Concepto", "Monto", "Tasa", "Fecha"],
             ...reporteDetalladoGeneral
         ]
     })
@@ -43,7 +43,7 @@ export function BuildReport(dataCallback, endCallback, invoiceList: Iinvoice[]){
     doc.text(`Pagos pendientes:`)
     doc.table({
         data: [
-            ["Cedula", "Nombre", "Concepto", "Monto", "Tasa", "Fecha", "Metodo de pago"],
+            ["Cedula", "Nombre", "Concepto", "Monto", "Tasa", "Fecha"],
             ...pagosPendientes
         ]
     })
@@ -53,7 +53,7 @@ export function BuildReport(dataCallback, endCallback, invoiceList: Iinvoice[]){
     doc.text(`Pagos completados:`)
     doc.table({
         data: [
-            ["Cedula", "Nombre", "Concepto", "Monto", "Tasa", "Fecha", "Metodo de pago"],
+            ["Cedula", "Nombre", "Concepto", "Monto", "Tasa", "Fecha"],
             ...pagosCompletados
         ]
     })
@@ -63,7 +63,7 @@ export function BuildReport(dataCallback, endCallback, invoiceList: Iinvoice[]){
     doc.text(`Transacciones canceladas en bolivares:`)
     doc.table({
         data: [
-            ["Cedula", "Nombre", "Concepto", "Monto", "Tasa", "Fecha", "Metodo de pago"],
+            ["Cedula", "Nombre", "Concepto", "Monto", "Tasa", "Fecha"],
             ...pagosEnBolivares
         ]
     })
@@ -74,7 +74,7 @@ export function BuildReport(dataCallback, endCallback, invoiceList: Iinvoice[]){
     doc.text(`Transacciones canceladas en dolares:`)
     doc.table({
         data: [
-            ["Cedula", "Nombre", "Concepto", "Monto", "Tasa", "Fecha", "Metodo de pago"],
+            ["Cedula", "Nombre", "Concepto", "Monto", "Tasa", "Fecha"],
             ...pagosEnDolares
         ]
     })
@@ -109,10 +109,9 @@ function ReporteDetalladoGeneral(list){
         item.studentsidentification,
         `${item.name} ${item.lastname}`,
         item.billableitem,
-        item.chargedAmount,
-        item.changeRate,
+        `$${item.chargedAmount}`,
+        `$Bs. ${item.exchangeRate}`,
         mergeDate(item.date),
-        item.currencyReceived
     ])
     return result;
 }
@@ -123,24 +122,22 @@ function PagosPendientes(list){
         item.studentsidentification,
         `${item.name} ${item.lastname}`,
         item.billableitem,
-        item.chargedAmount,
-        item.changeRate,
+        `$${item.chargedAmount}`,
+        `$Bs. ${item.exchangeRate}`,
         mergeDate(item.date),
-        item.currencyReceived
     ])
     return result;
 }
 
 function PagosCompletados(list){
-    const filteredList = list.filter(item => item.status == "Recibida")
+    const filteredList = list.filter(item => item.status == "Pagado")
     const result = filteredList.map(item => [
         item.studentsidentification,
         `${item.name} ${item.lastname}`,
         item.billableitem,
-        item.chargedAmount,
-        item.changeRate,
+        `$${item.chargedAmount}`,
+        `$Bs. ${item.exchangeRate}`,
         mergeDate(item.date),
-        item.currencyReceived
     ])
     return result;
 }
@@ -151,10 +148,9 @@ function PagosEnDolares(list){
         item.studentsidentification,
         `${item.name} ${item.lastname}`,
         item.billableitem,
-        item.chargedAmount,
-        item.changeRate,
+        `$${item.chargedAmount}`,
+        `$Bs. ${item.exchangeRate}`,
         mergeDate(item.date),
-        item.currencyReceived
     ])
     return result;
 }
@@ -165,10 +161,9 @@ function PagosEnBolivares(list){
         item.studentsidentification,
         `${item.name} ${item.lastname}`,
         item.billableitem,
-        item.chargedAmount,
-        item.changeRate,
+        `$${item.chargedAmount}`,
+        `$Bs. ${item.exchangeRate}`,
         mergeDate(item.date),
-        item.currencyReceived
     ])
     return result;
 }
