@@ -1,4 +1,4 @@
-import { query, execute } from "../dbConnection.ts"
+import { query, execute, withTransaction } from "../dbConnection.ts"
 import * as t from "../interfaces.ts"
 
 export async function openSection(data: t.newSection) {
@@ -10,23 +10,30 @@ export async function openSection(data: t.newSection) {
         data.code,
         data.quota,
     ]
-    const res = await execute(`
-        INSERT INTO sections(id, periodId, moduleId, code, quota)
-        VALUES (?, ?, ?, ?, ?)
-    `, values)
 
-    // NUEVO: Asignar profesores a la sección
-    if (data.teachers && data.teachers.length > 0) {
-        for (let i = 0; i < data.teachers.length; i++) {
-            const teacher = data.teachers[i]
-            await execute(`
-                INSERT INTO sections_teachers(sectionId, teacherId, evaluationOrder)
-                VALUES (?, ?, ?)
-            `, [sectionId, teacher.id, i + 1])
+    // La seccion y sus profesores se crean juntos o no se crea nada. Con
+    // `execute()` suelta, un fallo al asignar el segundo docente dejaba una
+    // seccion creada sin ningun profesor, y el docente veia un curso fantasma
+    // que no podia impartir.
+    return await withTransaction(async (conn) => {
+        await conn.execute(`
+            INSERT INTO sections(id, periodId, moduleId, code, quota)
+            VALUES (?, ?, ?, ?, ?)
+        `, values)
+
+        // Asignar profesores a la seccion
+        if (data.teachers && data.teachers.length > 0) {
+            for (let i = 0; i < data.teachers.length; i++) {
+                const teacher = data.teachers[i]
+                await conn.execute(`
+                    INSERT INTO sections_teachers(sectionId, teacherId, evaluationOrder)
+                    VALUES (?, ?, ?)
+                `, [sectionId, teacher.id, i + 1])
+            }
         }
-    }
 
-    return { sectionId, ...res }
+        return { sectionId }
+    })
 }
 
 export async function getSections(id: string) {

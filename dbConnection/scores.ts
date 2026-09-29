@@ -1,4 +1,51 @@
-import {execute, query} from '../dbConnection.ts'
+import {execute, query, withTransaction} from '../dbConnection.ts'
+import type { PoolConnection } from 'npm:mariadb'
+
+/**
+ * El registro de nota existe y pertenece al alumno indicado.
+ *
+ * Sin esto, un `enrollmentGradeId` inexistente hacia un UPDATE de 0 filas y la
+ * ruta respondia 200: el usuario creia que habia guardado.
+ */
+export async function enrollmentGradeBelongsTo(enrollmentGradeId: string, studentIdentification?: number | string, sectionCode?: string) {
+    const conditions = ['eg.id = ?']
+    const params: any[] = [enrollmentGradeId]
+
+    if (studentIdentification !== undefined) {
+        conditions.push('s.studentsIdentification = ?')
+        params.push(Number(studentIdentification))
+    }
+    if (sectionCode !== undefined) {
+        conditions.push('sec.code = ?')
+        params.push(sectionCode)
+    }
+
+    const res = await query(`
+        SELECT eg.id
+        FROM enrollments_grade eg
+        JOIN enrollments e ON eg.enrollmentId = e.id
+        JOIN students s ON e.studentId = s.id
+        JOIN sections sec ON e.sectionId = sec.id
+        WHERE ${conditions.join(' AND ')}
+        LIMIT 1
+    `, params)
+    return res.length > 0
+}
+
+/**
+ * Nota actual de un registro. La auditoria de `modify_scores` la lee de aca,
+ * no del cliente.
+ *
+ * Acepta una conexion para poder leerla dentro de una transaccion: si se
+ * usara `query()` suelta, la lectura saldria de otra conexion y no del mismo
+ * contexto que las escrituras posteriores.
+ */
+export async function getCurrentScore(enrollmentGradeId: string, conn?: PoolConnection) {
+    const res = await (conn ?? { query }).query(`
+        SELECT score, status FROM enrollments_grade WHERE id = ?
+    `, [enrollmentGradeId])
+    return res[0] || null
+}
 
 /*export async function loadScores(data: string) {
 	console.log(data)
@@ -10,45 +57,72 @@ import {execute, query} from '../dbConnection.ts'
 	return { message: 'Scores updated successfully'}
 }*/
 
+/**
+ * Carga las notas de varios alumnos a la vez.
+ *
+ * Va en una transaccion porque es una operacion en lote: si el alumno 7 de 20
+ * falla, sin transaccion quedan los otros 6 guardados y la nota final
+ * recalculada de algunos y de otros no, con el docente creyendo que no se
+ * guardo nada.
+ */
 export async function loadScores(data: any) {
     const { evaluationMode, grades } = data
-    
-    if (evaluationMode === 'Promedio') {
-        for (const studentGrade of grades) {
-            const { enrollmentGradeId, scores } = studentGrade
-            
-            for (const partial of scores) {
-                await execute(`
-                    INSERT INTO enrollment_partial_scores (id, enrollmentGradeId, evaluationOrder, score, weight, dateScore)
-                    VALUES (?, ?, ?, ?, ?, NOW())
-                    ON DUPLICATE KEY UPDATE 
-                        score = VALUES(score),
-                        dateScore = NOW()
-                `, [crypto.randomUUID(), enrollmentGradeId, partial.evaluationOrder, partial.score, partial.evaluationOrder === 1 ? 50.00 : 50.00])
+
+    return await withTransaction(async (conn) => {
+        if (evaluationMode === 'Promedio') {
+            for (const studentGrade of grades) {
+                const { enrollmentGradeId, scores } = studentGrade
+
+                for (const partial of scores) {
+                    await conn.execute(`
+                        INSERT INTO enrollment_partial_scores (id, enrollmentGradeId, evaluationOrder, score, weight, dateScore)
+                        VALUES (?, ?, ?, ?, ?, NOW())
+                        ON DUPLICATE KEY UPDATE
+                            score = VALUES(score),
+                            dateScore = NOW()
+                    `, [crypto.randomUUID(), enrollmentGradeId, partial.evaluationOrder, partial.score, 50.00])
+                }
+
+                // Se promedia lo enviado en vez de asumir dos parciales.
+                // Con `scores[0] + scores[1]` una lista de un solo elemento
+                // daba NaN y se guardaba como nota.
+                const totalWeighted = scores.reduce((acc: number, p: any) => acc + p.score * 50.00, 0)
+                const totalWeight = scores.length * 50.00
+                const finalScore = totalWeight > 0 ? Math.round((totalWeighted / totalWeight) * 100) / 100 : 0
+                const status = finalScore >= 10 ? 'Aprobado' : 'Reprobado'
+
+                await conn.execute(`
+                    UPDATE enrollments_grade
+                    SET score = ?, dateScore = NOW(), status = ?
+                    WHERE id = ?
+                `, [finalScore, status, enrollmentGradeId])
             }
+        } else {
+            for (const studentGrade of grades) {
+                const { enrollmentGradeId, score } = studentGrade
 
-            const finalScore = Math.round((scores[0].score + scores[1].score) / 2)
-            const status = finalScore >= 10 ? 'Aprobado' : 'Reprobado'
-            
-            await execute(`
-                UPDATE enrollments_grade 
-                SET score = ?, dateScore = NOW(), status = ?
-                WHERE id = ?
-            `, [finalScore, status, enrollmentGradeId])
-        }
-    } else {
-        for (const studentGrade of grades) {
-            const { enrollmentGradeId, score } = studentGrade
-            
-            await execute(`
-                UPDATE enrollments_grade 
-                SET score = ?, dateScore = NOW(), status = CASE WHEN ? >= 10 THEN 'Aprobado' ELSE 'Reprobado' END
-                WHERE id = ?
-            `, [score, score, enrollmentGradeId])
-        }
-    }
+                // score llega en null cuando el docente marco "SI": en ese
+                // caso se limpia la nota y se vuelve a "Inscrito", en vez de
+                // dejar el alumno con la nota anterior y estado "Aprobado".
+                if (score === null || score === undefined) {
+                    await conn.execute(`
+                        UPDATE enrollments_grade
+                        SET score = NULL, dateScore = NOW(), status = 'Inscrito'
+                        WHERE id = ?
+                    `, [enrollmentGradeId])
+                    continue
+                }
 
-    return { message: 'Scores updated successfully' }
+                await conn.execute(`
+                    UPDATE enrollments_grade
+                    SET score = ?, dateScore = NOW(), status = CASE WHEN ? >= 10 THEN 'Aprobado' ELSE 'Reprobado' END
+                    WHERE id = ?
+                `, [score, score, enrollmentGradeId])
+            }
+        }
+
+        return { message: 'Scores updated successfully' }
+    })
 }
 /*
 export async function getScoreByStudent(studentIdentification: string, moduleId: string) {
@@ -63,7 +137,7 @@ export async function getScoreByStudent(studentIdentification: string, moduleId:
 
 export async function updateScore(studentId: string, moduleId: string, gradeId: string, lastScore: string,newScore: string, reason: string) {
 	try {
-        // 1. Iniciamos una transacción para asegurar integridad
+        // 1. Iniciamos una transacciÃƒÂ³n para asegurar integridad
         await query('START TRANSACTION');
 
         // 2. Actualizamos la nota en la tabla enrollments_grade
@@ -72,11 +146,11 @@ export async function updateScore(studentId: string, moduleId: string, gradeId: 
             UPDATE enrollments_grade 
             SET score = ?, 
                 dateScore = NOW(),
-                status = IF(? >= 10, 'Aprobado', 'Reprobado') -- Ejemplo de lógica de estado
+                status = IF(? >= 10, 'Aprobado', 'Reprobado') -- Ejemplo de lÃƒÂ³gica de estado
             WHERE id = ?
         `, [Number(newScore), Number(newScore), gradeId]);
 
-        // 3. Insertamos el registro de auditoría en modify_scores
+        // 3. Insertamos el registro de auditorÃƒÂ­a en modify_scores
         // El ID de modify_scores se genera solo mediante uuid() en la DB
         await query(`
             INSERT INTO modify_scores (enrollmentGradeId, lastscore, newscore, reason, date)
@@ -134,31 +208,43 @@ export async function getScoreByStudent(studentIdentification: string, moduleId:
 export async function updateScore(data: {
     gradeId: string;
     evaluationMode: 'Simple' | 'Promedio';
-    finalScore?: { lastScore: number; newScore: number };
-    partials?: Array<{ partialId: string; evaluationOrder: number; lastScore: number; newScore: number }>;
+    // `lastScore` no forma parte del contrato de entrada a proposito: se lee
+    // de la base mas abajo. Si lo aceptara del cliente, modify_scores seria
+    // falsificable y la auditoria no tendria valor.
+    finalScore?: { newScore: number };
+    partials?: Array<{ partialId: string; evaluationOrder: number; newScore: number }>;
     reason: string;
 }) {
-    try {
-        await query('START TRANSACTION');
-
+    // El bloque entero necesita una sola conexion. Antes se emitia
+    // `START TRANSACTION` con `query()`, que tomaba una conexion del pool y la
+    // devolvia al terminar esa llamada, de modo que los UPDATE y el COMMIT
+    // iban por conexiones distintas: no habia transaccion real, la nota se
+    // actualizaba y la fila de modify_scores podia no insertarse, dejando el
+    // cambio de nota sin auditar.
+    return await withTransaction(async (conn) => {
         if (data.evaluationMode === 'Simple' && data.finalScore) {
-            await query(`
-                UPDATE enrollments_grade 
-                SET score = ?, 
+            // `lastscore` se lee de la base: si viene del cliente, la auditoria
+            // de modify_scores es falsificable y no sirve para nada.
+            const current = await getCurrentScore(data.gradeId, conn)
+            const lastScore = current ? (current.score ?? 0) : 0
+
+            await conn.execute(`
+                UPDATE enrollments_grade
+                SET score = ?,
                     dateScore = NOW(),
                     status = CASE WHEN ? >= 10 THEN 'Aprobado' ELSE 'Reprobado' END
                 WHERE id = ?
             `, [data.finalScore.newScore, data.finalScore.newScore, data.gradeId]);
 
-            await query(`
+            await conn.execute(`
                 INSERT INTO modify_scores (enrollmentGradeId, partialScoreId, lastscore, newscore, reason, date)
                 VALUES (?, NULL, ?, ?, ?, NOW())
-            `, [data.gradeId, data.finalScore.lastScore, data.finalScore.newScore, data.reason]);
+            `, [data.gradeId, lastScore, data.finalScore.newScore, data.reason]);
 
         } else if (data.evaluationMode === 'Promedio' && data.partials && data.partials.length > 0) {
-            const currentPartials = await query(`
-                SELECT id, score, weight, evaluationOrder 
-                FROM enrollment_partial_scores 
+            const currentPartials = await conn.query(`
+                SELECT id, score, weight, evaluationOrder
+                FROM enrollment_partial_scores
                 WHERE enrollmentGradeId = ?
             `, [data.gradeId]);
 
@@ -166,18 +252,21 @@ export async function updateScore(data: {
             currentPartials.forEach(p => partialMap.set(p.id, p));
 
             for (const partial of data.partials) {
-                await query(`
-                    UPDATE enrollment_partial_scores 
+                // Igual que arriba: la nota anterior sale de la fila actual.
+                const current = partialMap.get(partial.partialId)
+                const lastScore = current ? (current.score ?? 0) : 0
+
+                await conn.execute(`
+                    UPDATE enrollment_partial_scores
                     SET score = ?, dateScore = NOW()
                     WHERE id = ?
                 `, [partial.newScore, partial.partialId]);
 
-                await query(`
+                await conn.execute(`
                     INSERT INTO modify_scores (enrollmentGradeId, partialScoreId, lastscore, newscore, reason, date)
                     VALUES (?, ?, ?, ?, ?, NOW())
-                `, [data.gradeId, partial.partialId, partial.lastScore, partial.newScore, data.reason]);
+                `, [data.gradeId, partial.partialId, lastScore, partial.newScore, data.reason]);
 
-                const current = partialMap.get(partial.partialId);
                 if (current) {
                     current.score = partial.newScore;
                 }
@@ -193,27 +282,20 @@ export async function updateScore(data: {
             const newFinalScore = totalWeight > 0 ? Math.round((totalWeighted / totalWeight) * 100) / 100 : 0;
             const status = newFinalScore >= 10 ? 'Aprobado' : 'Reprobado';
 
-            await query(`
-                UPDATE enrollments_grade 
-                SET score = ?, 
+            await conn.execute(`
+                UPDATE enrollments_grade
+                SET score = ?,
                     dateScore = NOW(),
                     status = ?
                 WHERE id = ?
             `, [newFinalScore, status, data.gradeId]);
         }
 
-        await query('COMMIT');
-
-        return { 
-            success: true, 
-            message: 'Nota actualizada y cambio registrado en el historial.' 
+        return {
+            success: true,
+            message: 'Nota actualizada y cambio registrada en el historial.'
         };
-
-    } catch (error) {
-        await query('ROLLBACK');
-        console.error("Error en updateScore:", error);
-        throw error;
-    }
+    });
 }
 export async function getGradeStudentsBySection(periodId: string, sectionCode: string) {
     try {

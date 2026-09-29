@@ -19,7 +19,7 @@ export async function getAllUsers(page: number){
 export async function createNewUser(user: IUser){
     const _res = await execute(`
         INSERT INTO users(id, name, lastname, passwordSHA256, type, active)
-        VALUES(?, ?, ?, ?, ?, ?, ?);
+        VALUES(?, ?, ?, ?, ?, ?);
     `, [user.id, user.name, user.lastname, user.passwordSHA256, user.type, user.active])
 }
 
@@ -39,4 +39,13 @@ export async function updatePassword(userId: string, newPassword: string){
     const _res = await execute(`
         UPDATE users SET passwordSHA256 = ? WHERE id = ?	
     `, [newPassword, userId])
+}
+
+/**
+ * users.id no tiene AUTO_INCREMENT, asi que el id lo elige el cliente y hay
+ * que comprobar que este libre antes de insertar.
+ */
+export async function isUserIdTaken(id: number | string) {
+    const res = await query(`SELECT id FROM users WHERE id = ?`, [id])
+    return res.length > 0
 }

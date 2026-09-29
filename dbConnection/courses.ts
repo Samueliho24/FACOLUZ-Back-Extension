@@ -1,11 +1,12 @@
-import { query, execute } from "../dbConnection.ts"
+import { query, execute, withTransaction } from "../dbConnection.ts"
+import { escapeLike } from "../functions/validators.ts"
 
 export async function filterCourses(param: string){
 	const res = await query(`
 		SELECT * FROM courses
 		WHERE
-			description LIKE ?
-	`, [param])
+			description LIKE ? ESCAPE '\\'
+	`, [escapeLike(param)])
 	return res;
 }
 
@@ -23,10 +24,11 @@ export async function setCourse(description: string){
 }
 
 export async function updateAssignedModulesForCourse(courseId: string, moduleIds: (string|number)[]){
-	// Remove existing assignments for the course and insert the provided ones in a single operation
-	try{
-		// Delete existing
-		await execute(`DELETE FROM modules_courses WHERE courseid = ?`, [courseId])
+	// El borrado y los INSERT van en la misma transaccion: si un INSERT
+	// fallaba a la mitad, el curso se quedaba sin los modulos que tenia
+	// asignados y sin los nuevos, y `execute()` suelta no lo revierte.
+	return await withTransaction(async (conn) => {
+		await conn.execute(`DELETE FROM modules_courses WHERE courseid = ?`, [courseId])
 		if (moduleIds && moduleIds.length > 0){
 			const placeholders = moduleIds.map(() => '(?, ?, ?)').join(', ')
 			const params: any[] = []
@@ -35,10 +37,7 @@ export async function updateAssignedModulesForCourse(courseId: string, moduleIds
 				params.push(courseId)
 				params.push(index)
 			})
-			await execute(`INSERT INTO modules_courses(moduleid, courseid, \`order\`) VALUES ${placeholders}`, params)
+			await conn.execute(`INSERT INTO modules_courses(moduleid, courseid, \`order\`) VALUES ${placeholders}`, params)
 		}
-	}catch(err){
-		console.log(err)
-		throw err
-	}
+	})
 }

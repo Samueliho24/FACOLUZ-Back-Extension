@@ -46,7 +46,9 @@ export interface IPayment{
     paidAmount: number,
     receivedPaymentMethod: string,
     returnedAmount: number,
-    returnedPaymentMethod: string,
+    // payments.returnedPaymentMethod es nullable: solo se usa cuando hay
+    // monto a devolver.
+    returnedPaymentMethod: string | null,
     exchangeRate: number,
     reference?: string,
     returnReference?: string,

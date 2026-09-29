@@ -1,11 +1,12 @@
 import { query, execute } from "../dbConnection.ts"
+import { escapeLike } from "../functions/validators.ts"
 
 export async function filterModules(param: string){
 	const res = await query(`
 		SELECT * FROM modules
 		WHERE
-			description LIKE ?
-	`, [param])
+			description LIKE ? ESCAPE '\\'
+	`, [escapeLike(param)])
 	return res;
 }
 
@@ -63,4 +64,10 @@ export async function getModulesByCourse(courseId: string) {
         ORDER BY mc.order ASC
     `, [courseId]);
     return res;
+}
+
+/** El modulo existe y no esta suspendido. */
+export async function activeModuleExists(moduleId: string) {
+    const res = await query(`SELECT id FROM modules WHERE id = ? AND status = 'Activo'`, [moduleId])
+    return res.length > 0
 }

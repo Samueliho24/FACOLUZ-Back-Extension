@@ -1,9 +1,10 @@
-import { query, execute } from "../dbConnection.ts"
+import { query } from "../dbConnection.ts"
 import * as t from "../interfaces.ts"
 
-//Inicio de sesion
 export async function login(data: t.loginData){
-	const id = data.id
-	const res = await query('SELECT * FROM users WHERE id = ?', [id])
-	return res
+	console.log(data)
+	return await query(
+		'SELECT id, name, lastname, passwordSHA256, type, active FROM users WHERE id = ? AND passwordSHA256 = ?',
+		[data.id, data.passwordHash]
+	)
 }

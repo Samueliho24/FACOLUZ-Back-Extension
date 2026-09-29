@@ -107,6 +107,21 @@ export async function issueInvoice(data: t.invoiceData){
     }
 }
 
+/**
+ * Estado y saldo de una factura.
+ *
+ * `makePayment` y `cancelInvoice` la necesitan para no operar sobre una factura
+ * anulada ni sobre un saldo ya saldado.
+ */
+export async function getInvoiceById(invoiceId: string) {
+    const res = await query(`
+        SELECT id, status, chargedAmount, quantity, exchangeRate, StudentIdentification, billableid, comments, date
+        FROM invoices
+        WHERE id = ?
+    `, [invoiceId])
+    return res[0] || null
+}
+
 export async function getCurrentDayInvoices(page: number){
     const res = await query(`
         SELECT 
@@ -143,6 +158,12 @@ export async function getInvoicesByPayer(page: number, identification: number){
 }
 
 export async function cancelInvoice(invoiceId: string){
+    const invoice = await getInvoiceById(invoiceId)
+    if (!invoice) throw new Error('La factura no existe')
+
+    // Anular dos veces insertaba dos devoluciones sobre la misma factura.
+    if (invoice.status === 'Anulada') throw new Error('La factura ya se encuentra anulada')
+
     const payments = await getPaymentsByInvoice(invoiceId)
 
     let ammountToReturn = totalizePayments(payments);

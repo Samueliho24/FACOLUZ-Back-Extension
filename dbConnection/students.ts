@@ -1,14 +1,17 @@
 import { query, execute } from "../dbConnection.ts"
 import * as t from "../interfaces.ts"
+import { escapeLike } from "../functions/validators.ts"
 
 export async function filterStudents(param: string){
-	const q = `${param}%`
+	// `escapeLike` evita que `%` o `_` se interpreten como comodines y
+	// devuelvan todos los alumnos con su informacion personal.
+	const q = `${escapeLike(param)}%`
 	const res = await query(`
 		SELECT * FROM students
 		WHERE
-			name LIKE ?
-			OR lastname LIKE ?
-			OR CAST(studentsidentification AS CHAR) LIKE ?
+			name LIKE ? ESCAPE '\\'
+			OR lastname LIKE ? ESCAPE '\\'
+			OR CAST(studentsidentification AS CHAR) LIKE ? ESCAPE '\\'
 	`, [q, q, q])
 	return res;
 }
@@ -64,17 +67,41 @@ export async function getEnrolledStudentsByModule(moduleId: number){
 	return res
 }
 
-export async function studentExist(studentIdentification: number){
-    console.log(studentIdentification)
+/** true si la cedula ya esta registrada. La usaba el emitter de facturas. */
+export async function studentExist(studentIdentification: number | string){
     const res = await query(`
         SELECT id FROM students WHERE studentsIdentification = ?    
     `, [studentIdentification])
 
-    if (res.length > 0){
-        return true
-    } else{
-        return false
-    }
+    return res.length > 0
+}
+
+/** Datos minimos del alumno, para validar existencia y mostrar el nombre. */
+export async function getStudentSummary(studentIdentification: number | string){
+    const res = await query(`
+        SELECT id, name, lastname, email, studentsIdentification, status
+        FROM students
+        WHERE studentsIdentification = ?
+    `, [studentIdentification])
+    return res[0] || null
+}
+
+/** Cedulas ya usadas por otro alumno. Excluye `exceptId` para las ediciones. */
+export async function isStudentIdTaken(studentIdentification: number | string, exceptId?: number | string){
+    const res = await query(`
+        SELECT id FROM students
+        WHERE studentsIdentification = ? AND (? IS NULL OR id <> ?)
+    `, [studentIdentification, exceptId ?? null, exceptId ?? null])
+    return res.length > 0
+}
+
+/** Correos ya usados por otro alumno. */
+export async function isStudentEmailTaken(email: string, exceptId?: number | string){
+    const res = await query(`
+        SELECT id FROM students
+        WHERE LOWER(email) = LOWER(?) AND (? IS NULL OR id <> ?)
+    `, [email, exceptId ?? null, exceptId ?? null])
+    return res.length > 0
 }
 
 export async function deactivateStudent(id: string) {

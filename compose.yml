@@ -38,7 +38,7 @@ services:
       extension: 
         ipv4_address: 172.18.0.3
     ports:
-      - 3306:3306
+      - ${BDD_HOST_PORT:-3307}:3306
     restart: always
     environment:
       # A condinuacion escribir la contraseña de la base de datos
@@ -52,3 +52,7 @@ networks:
       driver: default
       config:
         - subnet: 172.18.0.0/16
+
+volumes:
+  extension_api_data:
+  extension_db_data:

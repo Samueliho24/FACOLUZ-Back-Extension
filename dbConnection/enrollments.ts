@@ -1,5 +1,5 @@
 import exp from "node:constants";
-import { query, execute } from "../dbConnection.ts"
+import { query, execute, withTransaction } from "../dbConnection.ts"
 /*
 export async function registerEnrollment(studentId: string, sectionId: string) {
 	const enrollmentId = crypto.randomUUID()
@@ -42,30 +42,95 @@ export async function registerEnrollment(data: any) {
         parentEnrollmentId = null
     } = data;
 
-    // Validar cupo de la sección
-    const cupoRes = await query(`
-        SELECT s.quota, COUNT(e.id) as enrolled 
-        FROM sections s 
-        LEFT JOIN enrollments e ON e.sectionId = s.id 
-        WHERE s.id = ?
-        GROUP BY s.id
-    `, [sectionId]);
-    
-    if (cupoRes[0] && cupoRes[0].enrolled >= cupoRes[0].quota) {
-        throw new Error('Sección sin cupo disponible');
-    }
+    // Todo el bloque va en una transaccion sobre una sola conexion. Con
+    // `query()` suelta, el `FOR UPDATE` se emitia sobre una conexion que
+    // se devolvia al pool al instante: el bloqueo no duraba nada y las
+    // consultas siguientes no veian el mismo contexto, asi que dos
+    // inscripciones simultaneas podian leer el mismo COUNT y las dos pasar
+    // el cupo. Aqui el `FOR UPDATE` sobre la fila de `sections` serializa
+    // de verdad a quien compita por la ultima plaza.
+    return await withTransaction(async (conn) => {
+        // Seccion, periodo y modulo tienen que existir y estar vigentes. Antes solo
+        // los protegia la FK, con un 500 crudo, y se podia inscribir en una
+        // seccion cerrada o en un periodo finalizado.
+        const section = await conn.query(`
+            SELECT s.id, s.quota, s.status AS sectionStatus,
+                   p.id AS periodId, p.status AS periodStatus,
+                   m.id AS moduleId, m.status AS moduleStatus,
+                   (SELECT COUNT(*) FROM enrollments e WHERE e.sectionId = s.id) AS enrolled
+            FROM sections s
+            JOIN periods p ON s.periodId = p.id
+            JOIN modules m ON s.moduleId = m.id
+            WHERE s.id = ?
+            FOR UPDATE
+        `, [sectionId]);
 
-    const res1 = await execute(`
-        INSERT INTO enrollments(id, studentId, sectionId, cohortId, enrollmentType, parentEnrollmentId, dateEnrollment, status)
-        VALUES(?, ?, ?, ?, ?, ?, NOW(), ?)
-    `, [enrollmentId, studentId, sectionId, cohortId, enrollmentType, parentEnrollmentId, 'Deuda']);
+        if (section.length === 0) throw new Error('La seccion no existe')
+        if (section[0].sectionStatus !== 'Activa') throw new Error('La seccion no esta activa')
+        if (section[0].periodStatus !== 'En curso') throw new Error('El periodo no esta en curso')
+        if (section[0].moduleStatus !== 'Activo') throw new Error('El modulo esta suspendido')
 
-    await execute(`
-        INSERT INTO enrollments_grade(enrollmentId, status)
-        VALUES (?, ?)
-    `, [enrollmentId, 'Inscrito']);
+        // El COUNT se relee dentro de la transaccion, ya con la fila de la
+        // seccion bloqueada: el valor de arriba es valido para decidir.
+        if (section[0].enrolled >= section[0].quota) {
+            throw new Error('SecciÃ³n sin cupo disponible');
+        }
 
-    return { enrollmentId, ...res1 };
+        // No inscribir dos veces al mismo alumno en la misma seccion. Hoy no hay
+        // UNIQUE en la tabla, asi que el duplicado pasaba y duplicaba notas.
+        const duplicate = await conn.query(`
+            SELECT id FROM enrollments WHERE studentId = ? AND sectionId = ?
+        `, [studentId, sectionId])
+        if (duplicate.length > 0) throw new Error('El estudiante ya esta inscrito en esta seccion')
+
+        // No reinscribir un modulo ya aprobado. getApprovedModulesByStudent ya
+        // existia y no se estaba usando: el check vivia solo en el cliente.
+        const alreadyApproved = await conn.query(`
+            SELECT sec.moduleId
+            FROM enrollments e
+            JOIN sections sec ON e.sectionId = sec.id
+            JOIN enrollments_grade eg ON e.id = eg.enrollmentId
+            WHERE e.studentId = ? AND sec.moduleId = ? AND eg.status = 'Aprobado'
+            LIMIT 1
+        `, [studentId, section[0].moduleId])
+        if (alreadyApproved.length > 0) throw new Error('El estudiante ya aprobo este modulo')
+
+        // El modulo debe pertenecer al curso del cohorte.
+        const courseModule = await conn.query(`
+            SELECT mc.moduleid FROM modules_courses mc
+            JOIN student_cohorts sc ON sc.courseId = mc.courseid
+            WHERE sc.id = ? AND mc.moduleid = ?
+            LIMIT 1
+        `, [cohortId, section[0].moduleId])
+        if (courseModule.length === 0) throw new Error('El modulo no pertenece al curso del cohorte')
+
+        // Si es Repitiente tiene que venir la inscripcion original, ser del mismo
+        // alumno y estar Reprobada. Antes solo el cliente lo deducia.
+        if (enrollmentType === 'Repitiente') {
+            if (!parentEnrollmentId) throw new Error('Una inscripcion Repitiente requiere la inscripcion original')
+            const parent = await conn.query(`
+                SELECT e.id, e.studentId, eg.status AS gradeStatus
+                FROM enrollments e
+                LEFT JOIN enrollments_grade eg ON e.id = eg.enrollmentId
+                WHERE e.id = ?
+            `, [parentEnrollmentId])
+            if (parent.length === 0) throw new Error('La inscripcion original no existe')
+            if (parent[0].studentId !== studentId) throw new Error('La inscripcion original pertenece a otro estudiante')
+            if (parent[0].gradeStatus !== 'Reprobado') throw new Error('La inscripcion original no esta reprobada')
+        }
+
+        await conn.execute(`
+            INSERT INTO enrollments(id, studentId, sectionId, cohortId, enrollmentType, parentEnrollmentId, dateEnrollment, status)
+            VALUES(?, ?, ?, ?, ?, ?, NOW(), ?)
+        `, [enrollmentId, studentId, sectionId, cohortId, enrollmentType, parentEnrollmentId, 'Deuda']);
+
+        await conn.execute(`
+            INSERT INTO enrollments_grade(enrollmentId, status)
+            VALUES (?, ?)
+        `, [enrollmentId, 'Inscrito']);
+
+        return { enrollmentId };
+    });
 }
 
 export async function getLastEnrollmentByStudentId(studentIdentification: number) {
