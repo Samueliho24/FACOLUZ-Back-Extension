@@ -52,6 +52,19 @@ function guardFor(maxType: number) {
 
 			if (payload.type > maxType) return res.status(401).send('Restringido')
 
+			// El payload verificado se deja en la peticion (T3).
+			//
+			// Antes se descartaba: la ruta recibia un token del que sabia el `type`
+			// pero no el `id`, y aun asi no le servia de nada. Con dos personas
+			// emitiendo y cobrando, `invoices.issuedBy` y `invoices.cancelledBy`
+			// no tenian de donde sacar el usuario: quedaban en NULL y la auditoria
+			// era decorativa.
+			//
+			// Se asigna DESPUES de verificar la firma y de comprobar el tipo: un
+			// token invalido nunca llega a `req.user`, asi que ningun handler puede
+			// confiar en el por error.
+			req.user = payload
+
 			next()
 		} catch (err) {
 			return res.status(401).send('Token no válido')

@@ -11,21 +11,22 @@ import { login } from "./dbConnection/system.ts"
 import { getCertificateInfo, getCertificateList } from "./dbConnection/certificates.ts"
 import { filterCourses, getAllCourses, setCourse, updateAssignedModulesForCourse } from "./dbConnection/courses.ts"
 import { getLastEnrollmentByStudentId, registerEnrollment, updateEnrollmentState, getStudentCohorts, createStudentCohort, getEnrollmentHistory,getApprovedModulesByStudent, getEnrollmentCountBySection } from "./dbConnection/enrollments.ts"
-import { getAllinvoices, getCurrentDayInvoices, getIdInvoice, getInvoicesById, getInvoicesByPayer, getinvoicesVerification, getinvoicesVerificationById, issueInvoice, verifyInvoice, cancelInvoice, getInvoiceById } from "./dbConnection/invoices.ts"
+import { getAllinvoices, getCurrentDayInvoices, getIdInvoice, getInvoicesById, getInvoicesByPayer, getinvoicesVerification, getinvoicesVerificationById, issueInvoice, verifyInvoice, cancelInvoice, getInvoiceById, getInvoiceDetail } from "./dbConnection/invoices.ts"
 import { deactivateModule, filterModules, getAllModules, getAssignedModulesByCourse, getSearchedModule, setModule, getModulesByCourse, activeModuleExists } from "./dbConnection/modules.ts"
-import { getPaymentsByInvoice, makePayment } from "./dbConnection/payments.ts"
+import { getPaymentsByInvoice, makePayment, PaymentError } from "./dbConnection/payments.ts"
 import { changeEndDatePeriod, closePeriod, getCurrentPeriod, openPeriod, getPeriods, getActivePeriods, 	getPeriodById,
 	getPeriodByYearAndNumber,
 	periodExists, runningPeriodExists, openPeriodExists } from "./dbConnection/period.ts"
 import { openSection, getSections, getCurrentSection, closeSection, getSectionByModule, getStudentsInSection, getSectionByPeriod } from "./dbConnection/section.ts"
 import { getReportInfo } from "./dbConnection/reports.ts"
-import { deactivateStudent, filterStudents, getEnrolledStudentsByModule, getStudentById, getStudents, registerStudents, getStudentCardInfo, studentExist, isStudentIdTaken, isStudentEmailTaken } from "./dbConnection/students.ts"
+import { deactivateStudent, filterStudents, getEnrolledStudentsByModule, getStudentById, getStudents, registerStudents, getStudentCardInfo, studentExist, getBillableStudent, isStudentIdTaken, isStudentEmailTaken } from "./dbConnection/students.ts"
 import { filterTeachers, getTeachers, registerTeacher, deactivateTeacher, activeTeacherExists, isTeacherIdTaken, isTeacherEmailTaken } from "./dbConnection/teachers.ts"
 import { loadScores, getScoreByStudent, updateScore, getGradeStudentsBySection, enrollmentGradeBelongsTo } from "./dbConnection/scores.ts";
 import { getDocumentsList, saveDocument } from "./dbConnection/documents.ts"
 import { getAllUsers, createNewUser, updatePassword, updateUser, isUserIdTaken } from "./dbConnection/users.ts";
-import { ChangePrices, GetBillables, billableExists, getBillable } from "./dbConnection/billables.ts";
-import { totalizePayments } from "./functions/totalizePayments.ts";
+import { ChangePrices, GetBillables, getBillable } from "./dbConnection/billables.ts";
+import { totalizePayments, round2 } from "./functions/totalizePayments.ts";
+import { resolveExchangeRate } from "./functions/getDolarPrice.ts";
 import { randomUUID } from "node:crypto";
 import { IFilterUsers } from "./types/filterObjects/IFilterUsers.ts";
 import {
@@ -173,25 +174,58 @@ app.post('/api/issueInvoice', mw.departmentWorker, async (req, res) => {
 		v.uuid('billableid', body.billableid, 'El concepto')
 		// quantity es int(11) NOT NULL y admitia 0 y negativos.
 		v.integer('quantity', body.quantity, 'La cantidad', QUANTITY_MIN, QUANTITY_MAX)
-		v.amount('chargedAmount', body.chargedAmount, 'El monto facturado')
+		// `chargedAmount` NO se valida porque NO se usa: el monto lo calcula el
+		// servidor como precio x cantidad. Validarlo solo le daria al cliente la
+		// sensacion de que su numero cuenta.
+		//
+		// La tasa si se valida, pero como respaldo: si la API de dolarapi no
+		// responde, `resolveExchangeRate` cae a esta. Con min 0.000001 se
+		// garantiza que ni una ni otra puedan ser 0.
 		v.amount('exchangeRate', body.exchangeRate, 'La tasa de cambio', { min: 0.000001 })
 		v.longText('comment', body.comment, 'El comentario', 200)
 		const err = v.firstError()
 		if (err) return res.status(400).send(err)
 
-		if (!(await studentExist(body.studentIdentification))) {
-			return res.status(404).send(failure('studentIdentification', 'No se ah encontrado al estudiante'))
+		// Un estudiante inactivo no se factura. Antes solo se comprobaba que
+		// existiera la fila, asi que a un alumno desactivado se le seguian
+		// emitiendo facturas.
+		const student = await getBillableStudent(body.studentIdentification)
+		if (!student) {
+			const existe = await studentExist(body.studentIdentification)
+			return existe
+				? res.status(400).send(failure('studentIdentification', 'El estudiante esta inactivo y no se puede facturar'))
+				: res.status(404).send(failure('studentIdentification', 'No se ah encontrado al estudiante'))
 		}
-		// Solo lo protegia la FK, y con un 500 crudo.
-		if (!(await billableExists(body.billableid))) {
+
+		// El precio lo define la caja (PUT /api/prices). Se lee aqui y no se usa
+		// el `chargedAmount` del cuerpo: el monto es del servidor.
+		const billable = await getBillable(body.billableid)
+		if (!billable) {
 			return res.status(400).send(failure('billableid', 'El concepto facturable no existe'))
 		}
 
+		const quantity = Number(body.quantity)
+		const chargedAmount = round2(Number(billable.price) * quantity)
+		// Un concepto de precio 0 con cantidad > 0 daria una factura de $0.00, que
+		// no tiene sentido emitir ni para cobrar.
+		if (!(chargedAmount > 0)) {
+			return res.status(400).send(failure('billableid', `El precio del concepto "${billable.name}" es 0, no se puede facturar`))
+		}
+
+		// La tasa la decide el servidor. La del cuerpo solo entra si la API
+		// externa no responde.
+		const exchangeRate = await resolveExchangeRate(body.exchangeRate)
+
 		const dbResponse = await issueInvoice({
-			...body,
-			quantity: Number(body.quantity),
-			chargedAmount: validateAmount(body.chargedAmount),
-			exchangeRate: Number(body.exchangeRate)
+			studentIdentification: body.studentIdentification,
+			billableid: body.billableid,
+			quantity,
+			chargedAmount,
+			exchangeRate,
+			comment: body.comment,
+			// Del token verificado, nunca del cuerpo: si viniera del cuerpo,
+			// cualquiera podria emitir una factura a nombre de otro.
+			issuedBy: req.user?.id ?? null
 		})
 		if(dbResponse === true){
 			res.status(200).send("Factura creada exitosamente")
@@ -943,44 +977,43 @@ app.get("/api/payments/:invoiceId", mw.departmentWorker, async(req, res) => {
 	}
 })
 
+//Detalle de una factura con el saldo calculado por el servidor.
+//El modal de cobro lo usa para mostrar el saldo pendiente. El saldo lo decide
+//`totalizePayments`; el cliente no lo recalcula (T5 del P0).
+app.get("/api/invoice/:invoiceId", mw.departmentWorker, async(req, res) => {
+	try{
+		const invoiceId: string = req.params.invoiceId
+		if (!isUuid(invoiceId)) {
+			return res.status(400).send(failure('invoiceId', 'El identificador de la factura no es valido'))
+		}
+		const dbResponse = await getInvoiceDetail(invoiceId)
+		if (!dbResponse) {
+			return res.status(404).send(failure('invoiceId', 'No se encontro la factura'))
+		}
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send('Error del servidor')
+	}
+})
+
 //Abonar a una factura
 app.post("/api/payments", mw.departmentWorker, async(req, res) => {
 	try{
 		const data: t.IPayment = req.body
 		const v = newValidator()
 		v.uuid('InvoiceId', data.InvoiceId, 'La factura')
-		// "Infinity" y "NaN" llegaban contra un float NOT NULL.
-		v.amount('paidAmount', data.paidAmount, 'El monto pagado')
 		v.amount('exchangeRate', data.exchangeRate, 'La tasa de cambio', { min: 0.000001 })
 		v.longText('reference', data.reference, 'La referencia', REFERENCE_MAX)
 		v.longText('returnReference', data.returnReference, 'La referencia de devolucion', REFERENCE_MAX)
-		v.longText('comments', data.comments, 'El comentario', 200)
-		const err = v.firstError()
-		if (err) return res.status(400).send(err)
+		v.longText('comments', data.comments, 'La observacion', 300)
 
-		const paidAmount = validateAmount(data.paidAmount)
-
-		// returnedAmount es 0 <= x <= paidAmount. Sin este techo, un negativo
-		// marcaba la factura como pagada sin que entre dinero: es el ataque mas
-		// grave de la tabla de pagos.
+		// El <Select> manda 1..4 y el ENUM guarda el nombre. Sin normalizar, todo
+		// se guardaba mal.
 		//
-		// Se lee de `req.body` y no de `data` porque el tipo declarado dice
-		// `number`, pero el body todavia no esta validado y un input vacio
-		// llega como `''`.
-		const rawReturnedAmount: any = (req.body as any).returnedAmount
-		let returnedAmount = 0
-		if (rawReturnedAmount !== undefined && rawReturnedAmount !== null && rawReturnedAmount !== '') {
-			if (typeof rawReturnedAmount === 'boolean' || !Number.isFinite(Number(rawReturnedAmount))) {
-				return res.status(400).send(failure('returnedAmount', 'El monto de devolucion debe ser un numero entre 0 y el monto pagado'))
-			}
-			returnedAmount = Number(rawReturnedAmount)
-			if (returnedAmount < 0 || returnedAmount > paidAmount) {
-				return res.status(400).send(failure('returnedAmount', 'El monto de devolucion debe estar entre 0 y el monto pagado'))
-			}
-		}
-
-		// El <Select> manda 1..4 y el ENUM guarda el nombre. Sin normalizar,
-		// todo se guardaba mal.
+		// Se normaliza ANTES de validar el monto porque una exoneracion no lleva
+		// monto: no es dinero. Validarlo como monto obligaria al cajero a
+		// escribir el total para "pagar" de ahi.
 		let receivedPaymentMethod = ''
 		let returnedPaymentMethod: string | null = null
 		try {
@@ -988,6 +1021,48 @@ app.post("/api/payments", mw.departmentWorker, async(req, res) => {
 		} catch (e) {
 			return res.status(400).send(e)
 		}
+		const isExoneration = receivedPaymentMethod === 'Exoneracion'
+
+		if (isExoneration) {
+			// D4: la observacion es obligatoria y tiene que decir por que se exonera
+			// y quien lo autorizo. La forma la revisa la ruta; que el texto sea de
+			// verdad una justificacion, la transaccion con la factura bloqueada.
+			if (String(req.body.comments ?? '').trim().length < 10) {
+				return res.status(400).send(failure('comments', 'La exoneracion requiere una observacion con el motivo y quien la autorizo'))
+			}
+		} else {
+			// "Infinity" y "NaN" llegaban contra un float NOT NULL.
+			v.amount('paidAmount', data.paidAmount, 'El monto pagado')
+		}
+
+		const err = v.firstError()
+		if (err) return res.status(400).send(err)
+
+		let paidAmount = 0
+		let returnedAmount = 0
+
+		if (!isExoneration) {
+			paidAmount = validateAmount(data.paidAmount)
+
+			// returnedAmount es 0 <= x <= paidAmount. Sin este techo, un negativo
+			// marcaba la factura como pagada sin que entre dinero: es el ataque mas
+			// grave de la tabla de pagos.
+			//
+			// Se lee de `req.body` y no de `data` porque el tipo declarado dice
+			// `number`, pero el body todavia no esta validado y un input vacio
+			// llega como `''`.
+			const rawReturnedAmount: any = (req.body as any).returnedAmount
+			if (rawReturnedAmount !== undefined && rawReturnedAmount !== null && rawReturnedAmount !== '') {
+				if (typeof rawReturnedAmount === 'boolean' || !Number.isFinite(Number(rawReturnedAmount))) {
+					return res.status(400).send(failure('returnedAmount', 'El monto de devolucion debe ser un numero entre 0 y el monto pagado'))
+				}
+				returnedAmount = Number(rawReturnedAmount)
+				if (returnedAmount < 0 || returnedAmount > paidAmount) {
+					return res.status(400).send(failure('returnedAmount', 'El monto de devolucion debe estar entre 0 y el monto pagado'))
+				}
+			}
+		}
+
 		if (returnedAmount > 0) {
 			if (!data.returnedPaymentMethod) {
 				return res.status(400).send(failure('returnedPaymentMethod', 'El metodo de devolucion es obligatorio si hay monto a devolver'))
@@ -999,13 +1074,21 @@ app.post("/api/payments", mw.departmentWorker, async(req, res) => {
 			}
 		}
 
-		// Sin esto se puede financiar la cadena de reembolsos infinitos.
+		// Estas dos comprobaciones dan un error claro y temprano. NO son la
+		// proteccion: la que vale esta dentro de makePayment, con la factura
+		// bloqueada, porque entre este SELECT y el INSERT entra otro cobro.
 		const invoice = await getInvoiceById(data.InvoiceId)
 		if (!invoice) {
 			return res.status(404).send(failure('InvoiceId', 'No se encontro la factura'))
 		}
 		if (invoice.status === 'Anulada') {
 			return res.status(400).send(failure('InvoiceId', 'No se puede pagar una factura anulada'))
+		}
+		// El status cierra el cobro, no el saldo: una factura exonerada tiene
+		// saldo = total (la exoneracion no es dinero) y sin esto volveria a admitir
+		// pagos.
+		if (invoice.status === 'Pagado') {
+			return res.status(400).send(failure('InvoiceId', 'La factura ya se encuentra pagada'))
 		}
 
 		// La referencia es obligatoria en transferencia: es el numero que deja
@@ -1014,13 +1097,10 @@ app.post("/api/payments", mw.departmentWorker, async(req, res) => {
 			return res.status(400).send(failure('reference', 'La referencia es obligatoria para pagos por transferencia'))
 		}
 
-		// El pago no puede exceder el saldo pendiente.
-		const previouslyPaid = totalizePayments(await getPaymentsByInvoice(data.InvoiceId))
-		const balance = Number(invoice.chargedAmount) - previouslyPaid
-		if (paidAmount > balance + 0.01) {
-			return res.status(400).send(failure('paidAmount', 'El monto a pagar no puede superar el saldo de la factura'))
-		}
-
+		// El saldo NO se comprueba aqui. Comprobarlo en la ruta es un TOCTOU: entre
+		// este SELECT y el INSERT de makePayment entra otro cobro y los dos pasan
+		// el chequeo. El chequeo vive dentro de la transaccion, con la factura
+		// bloqueada (makePayment).
 		const paymentResult = await makePayment({
 			...data,
 			paidAmount,
@@ -1031,15 +1111,17 @@ app.post("/api/payments", mw.departmentWorker, async(req, res) => {
 			returnReference: v.cleaned().returnReference,
 			comments: v.cleaned().comments
 		})
-		if(paymentResult === true){
-			res.status(200).send()
-		}else{
-			res.status(201).send()
-		}
+		res.status(200).send(paymentResult)
 	}catch(err){
 		if (isFailure(err)) return res.status(400).send(err)
+		// El cobro devuelve errores de negocio con un code propio: 404 si la
+		// factura no existe, 400 en el resto. A la caja nunca le llega el error
+		// crudo de MariaDB.
+		if (err instanceof PaymentError) {
+			return res.status(err.code === 'NOT_FOUND' ? 404 : 400).send(failure('InvoiceId', err.message))
+		}
 		console.log(err)
-		res.status(500).send(err)
+		res.status(500).send('Error del servidor')
 	}
 })
 
@@ -1049,8 +1131,23 @@ app.delete("/api/invoice/:invoiceId", mw.departmentWorker, async(req, res) => {
 		if (!isUuid(invoiceId)) {
 			return res.status(400).send(failure('invoiceId', 'El identificador de la factura no es valido'))
 		}
-		const _dbResponse = await cancelInvoice(invoiceId)
-		res.status(200).send()
+
+		// El motivo va en el cuerpo del DELETE. Una anulacion devuelve dinero y no
+		// se puede deshacer: sin motivo no hay forma de explicar despues por que
+		// se le devolvio el efectivo a un estudiante. Con dos personas en caja, el
+		// motivo y el usuario son la auditoria.
+		const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : ''
+		if (reason.length < 10) {
+			return res.status(400).send(failure('reason', 'Indique el motivo de la anulacion (minimo 10 caracteres)'))
+		}
+		if (reason.length > 200) {
+			return res.status(400).send(failure('reason', 'El motivo de la anulacion es demasiado largo'))
+		}
+
+		const dbResponse = await cancelInvoice(invoiceId, req.user?.id ?? null, reason)
+		// Se devuelve el importe para que la caja sepa cuanto efectivo entregar,
+		// calculado por el servidor y no por el cliente.
+		res.status(200).send(dbResponse)
 	}catch(err){
 		if (isFailure(err)) return res.status(400).send(err)
 		// "La factura no existe" y "ya se encuentra anulada" son estado, no
@@ -1059,7 +1156,7 @@ app.delete("/api/invoice/:invoiceId", mw.departmentWorker, async(req, res) => {
 			return res.status(400).send(failure('invoiceId', err.message))
 		}
 		console.log(err)
-		res.status(500).send(err)
+		res.status(500).send('Error del servidor')
 	}
 })
 

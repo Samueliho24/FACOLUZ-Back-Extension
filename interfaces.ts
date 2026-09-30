@@ -18,7 +18,9 @@ export interface invoiceData{
     quantity: number,
     chargedAmount: number,
     exchangeRate: number,
-    comment: string
+    comment: string,
+    /** users.id de quien emitio la factura. Viene del token, no del cuerpo. */
+    issuedBy?: number | null
 }
 
 export interface newStudent{

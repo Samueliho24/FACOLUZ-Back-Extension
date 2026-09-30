@@ -150,9 +150,22 @@ CREATE TABLE `invoices` (
   `status` enum('Pendiente','Pagado','Anulada') NOT NULL DEFAULT 'Pendiente',
   `StudentIdentification` int(11) NOT NULL,
   `quantity` int(11) NOT NULL,
+  `issuedBy` int(11) unsigned DEFAULT NULL COMMENT 'users.id de quien emitio la factura. Sin esto, con dos personas facturando, no hay forma de saber quien emitio una factura equivocada',
+  `cancelledAt` datetime DEFAULT NULL COMMENT 'Momento de la anulacion. Anular dos veces la misma factura queda bloqueado por status',
+  `cancelledBy` int(11) unsigned DEFAULT NULL COMMENT 'users.id de quien anulo',
+  `cancelledReason` text DEFAULT NULL COMMENT 'Motivo de la anulacion. El backend lo exige: una anulacion sin motivo no se puede devolver',
   PRIMARY KEY (`id`),
-  CONSTRAINT `fk_invoices_billable` FOREIGN KEY (`billableid`) REFERENCES `billables` (`id`)
-
+  KEY `fk_invoices_billable` (`billableid`),
+  KEY `idx_invoices_date` (`date`),
+  KEY `idx_invoices_student` (`StudentIdentification`, `date`),
+  KEY `idx_invoices_status` (`status`),
+  KEY `fk_invoices_issued_by` (`issuedBy`),
+  KEY `fk_invoices_cancelled_by` (`cancelledBy`),
+  CONSTRAINT `fk_invoices_billable` FOREIGN KEY (`billableid`) REFERENCES `billables` (`id`),
+  CONSTRAINT `fk_invoices_issued_by` FOREIGN KEY (`issuedBy`) REFERENCES `users` (`id`),
+  CONSTRAINT `fk_invoices_cancelled_by` FOREIGN KEY (`cancelledBy`) REFERENCES `users` (`id`),
+  CONSTRAINT `chk_invoices_charged_positive` CHECK (`chargedAmount` > 0),
+  CONSTRAINT `chk_invoices_quantity_positive` CHECK (`quantity` > 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 --
@@ -254,12 +267,31 @@ CREATE TABLE `payments` (
   `returnedAmount` float DEFAULT 0,
   `reference` varchar(20) DEFAULT NULL,
   `returnReference` varchar(20) DEFAULT NULL,
-  `comments` text DEFAULT NULL,
+  `comments` text DEFAULT NULL COMMENT 'Observaciones del pago. En una EXONERACION es obligatorio y debe dejar tanto el justificativo como quien lo autorizo, en un solo texto (decision D4)',
   `date` datetime NOT NULL DEFAULT current_timestamp(),
   `exchangeRate` float NOT NULL,
   PRIMARY KEY (`id`),
   KEY `payments_invoices_FK` (`invoiceId`),
-  CONSTRAINT `payments_invoices_FK` FOREIGN KEY (`invoiceId`) REFERENCES `invoices` (`id`)
+  KEY `idx_payments_date` (`date`),
+  CONSTRAINT `payments_invoices_FK` FOREIGN KEY (`invoiceId`) REFERENCES `invoices` (`id`),
+  CONSTRAINT `chk_payments_paid_nonneg` CHECK (`paidAmount` >= 0),
+  CONSTRAINT `chk_payments_returned_nonneg` CHECK (`returnedAmount` >= 0),
+
+  -- El techo de "no devuelvas mas de lo que pagaste" vale DENTRO de un
+  -- movimiento. Pero la anulacion escribe un movimiento que no es un pago: es
+  -- una salida de dinero, `paidAmount = 0` y `returnedAmount = <lo que se
+  -- devuelve>`. Con `returnedAmount <= paidAmount` a secas eso es `10 <= 0` y
+  -- la fila no entra: anular una factura cobrada fallaba con ERROR 4025.
+  -- El techo real (por factura) lo impone makePayment con FOR UPDATE.
+  CONSTRAINT `chk_payments_returned_le_paid` CHECK (
+    `paidAmount` = 0 OR `returnedAmount` IS NULL OR `returnedAmount` <= `paidAmount`
+  ),
+
+  -- Una exoneracion necesita justificacion. El backend ya la exige y el modal la
+  -- pide antes de enviar (T8); esto cubre lo que llegue por SQL.
+  CONSTRAINT `chk_payments_exoneracion_observada` CHECK (
+    `receivedPaymentMethod` <> 'Exoneracion' OR `comments` IS NOT NULL
+  )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 

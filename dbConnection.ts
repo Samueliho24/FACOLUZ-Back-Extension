@@ -15,6 +15,18 @@ const db = mariadb.createPool({
 	connectionLimit: Number(Deno.env.get("BDD_CONECTION_LIMITS"))
 })
 
+/**
+ * Cierra el pool.
+ *
+ * El servidor Express nunca la llama: vive hasta que lo matan. Los scripts y
+ * los tests si la necesitan, porque sin esto el proceso no termina -- el pool
+ * mantiene conexiones abiertas y Deno espera a que se cierren. Sin esta llamada,
+ * `flujo_p0.ts` imprime el resultado y despues se queda colgado.
+ */
+export async function closePool(){
+	await db.end()
+}
+
 export async function query(query: string, params?: object): Promise<any[]>{
 	let connection
 	try{

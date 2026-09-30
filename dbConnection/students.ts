@@ -86,6 +86,27 @@ export async function getStudentSummary(studentIdentification: number | string){
     return res[0] || null
 }
 
+/**
+ * Estudiante que se puede facturar (T3).
+ *
+ * `studentExist` solo mira que haya fila, asi que un alumno desactivado
+ * (`status = 'Inactivo'`) pasaba el filtro y se le emitian facturas igual. Que un
+ * estudiante inactivo no se factura es una regla del negocio, no del cliente:
+ * el cliente puede estar desactualizado, el servidor no.
+ *
+ * Se separa de `studentExist` a proposito. `studentExist` sigue usandose donde
+ * lo que se pregunta es "esta el registro", no "se le puede facturar", para no
+ * cambiar de golpe el comportamiento de las consultas historicas.
+ */
+export async function getBillableStudent(studentIdentification: number | string){
+    const res = await query(`
+        SELECT id, name, lastname, status
+        FROM students
+        WHERE studentsIdentification = ? AND status = 'Activo'
+    `, [studentIdentification])
+    return res[0] || null
+}
+
 /** Cedulas ya usadas por otro alumno. Excluye `exceptId` para las ediciones. */
 export async function isStudentIdTaken(studentIdentification: number | string, exceptId?: number | string){
     const res = await query(`

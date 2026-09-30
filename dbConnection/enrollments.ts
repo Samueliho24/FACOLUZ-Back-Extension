@@ -262,33 +262,14 @@ export async function getEnrollmentCountBySection(sectionId: string) {
     return res[0]?.enrolledCount || 0;
 }
 
-export async function verifyAndUpdateEnrollment(invoiceId: string){
-    interface ires0{
-        studentsId: string,
-        billable: string
-    }
-
-    const res0: ires0 = (await query(`
-        SELECT 
-            b.name AS billable,
-            s.Id AS studentsId
-        FROM invoices i
-        JOIN billables b ON i.billableid = b.id
-        JOIN students s ON i.StudentIdentification = s.studentsIdentification
-        WHERE i.id = ?
-    `, [invoiceId]))[0]
-
-    console.log(res0);
-    console.log(res0.billable == "Inscripcion")
-    console.log(res0.billable === "Inscripcion")
-
-    if(res0.billable == "Inscripcion"){
-        const enrrollment = await execute(`
-            UPDATE enrollments SET status = 'Pagada' WHERE studentId = ?
-        `, [res0.studentsId])
-
-        return;
-    }else{
-        return;
-    }
-}
+// verifyAndUpdateEnrollment (aqui) se elimino en T4 del P0.
+//
+// Hacia `UPDATE enrollments SET status = 'Pagada' WHERE studentId = ?` sin
+// filtrar por estado ni por seccion: marcaba como pagadas TODAS las inscripciones
+// del alumno, incluidas las que ya estaban saldadas. Ademas se llamaba FUERA de la
+// transaccion del pago y sin await, asi que su error se perdia en silencio.
+//
+// Ahora la regla vive en `settleEnrollmentsForInvoice` (dbConnection/payments.ts),
+// dentro de la transaccion y con `AND status = 'Deuda'`.
+// El problema de fondo sigue abierto: el esquema no relaciona una factura con las
+// inscripciones que salda. Ver PLAN-P0-FACTURACION.md.
