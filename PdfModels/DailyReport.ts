@@ -110,7 +110,7 @@ function ReporteDetalladoGeneral(list){
         `${item.name} ${item.lastname}`,
         item.billableitem,
         `$${item.chargedAmount}`,
-        `$Bs. ${item.exchangeRate}`,
+        `Bs. ${item.exchangeRate}`,
         mergeDate(item.date),
     ])
     return result;
@@ -123,7 +123,7 @@ function PagosPendientes(list){
         `${item.name} ${item.lastname}`,
         item.billableitem,
         `$${item.chargedAmount}`,
-        `$Bs. ${item.exchangeRate}`,
+        `Bs. ${item.exchangeRate}`,
         mergeDate(item.date),
     ])
     return result;
@@ -136,7 +136,7 @@ function PagosCompletados(list){
         `${item.name} ${item.lastname}`,
         item.billableitem,
         `$${item.chargedAmount}`,
-        `$Bs. ${item.exchangeRate}`,
+        `Bs. ${item.exchangeRate}`,
         mergeDate(item.date),
     ])
     return result;
@@ -149,7 +149,7 @@ function PagosEnDolares(list){
         `${item.name} ${item.lastname}`,
         item.billableitem,
         `$${item.chargedAmount}`,
-        `$Bs. ${item.exchangeRate}`,
+        `Bs. ${item.exchangeRate}`,
         mergeDate(item.date),
     ])
     return result;
@@ -162,7 +162,7 @@ function PagosEnBolivares(list){
         `${item.name} ${item.lastname}`,
         item.billableitem,
         `$${item.chargedAmount}`,
-        `$Bs. ${item.exchangeRate}`,
+        `Bs. ${item.exchangeRate}`,
         mergeDate(item.date),
     ])
     return result;

@@ -21,7 +21,7 @@ import { deactivateStudent, filterStudents, getEnrolledStudentsByModule, getStud
 import { filterTeachers, getTeachers, registerTeacher,deactivateTeacher } from "./dbConnection/teachers.ts"
 import { loadScores, getScoreByStudent, updateScore, getGradeStudentsBySection } from "./dbConnection/scores.ts";
 import { getDocumentsList, saveDocument } from "./dbConnection/documents.ts"
-import { getAllUsers, createNewUser, updatePassword, updateUser } from "./dbConnection/users.ts";
+import { getAllUsers, createNewUser, updatePassword, updateUser, getUserById } from "./dbConnection/users.ts";
 import { ChangePrices, GetBillables } from "./dbConnection/billables.ts";
 import { randomUUID } from "node:crypto";
 import { IFilterUsers } from "./types/filterObjects/IFilterUsers.ts";
@@ -898,7 +898,7 @@ app.get('/api/getEnrollmentCount/:sectionId', mw.departmentWorker, async (req, r
 
 // enpoints de usuarios
 
-app.get('/api/user/:page', mw.systemAdmin, async(req, res) => {
+app.get('/api/user/list/:page', mw.systemAdmin, async(req, res) => {
 	
 	//Si se esta filtrando u obteniendo un elemento concreto
 	//se usa este objeto, si es null se devuelven todos
@@ -911,6 +911,17 @@ app.get('/api/user/:page', mw.systemAdmin, async(req, res) => {
 	}catch(err){
 		console.log(err)
 		res.status(500).send()
+	}
+})
+
+app.get('/api/user/:id', mw.systemAdmin, async(req, res) => {
+	try{
+		const id: number = req.params.id;
+		const dbResponse = await getUserById(id);
+		res.status(200).send(dbResponse);
+	}catch(err){
+		console.log(err)
+		res.status(500).send();
 	}
 })
 
