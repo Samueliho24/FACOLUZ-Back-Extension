@@ -25,9 +25,9 @@ export async function getUserById(id: number){
 
 export async function createNewUser(user: IUser){
     const _res = await execute(`
-        INSERT INTO users(id, name, lastname, passwordSHA256, type, active)
-        VALUES(?, ?, ?, ?, ?, ?);
-    `, [user.id, user.name, user.lastname, user.passwordSHA256, user.type, user.active])
+        INSERT INTO users(id, name, lastname, passwordSHA256, type)
+        VALUES(?, ?, ?, ?, ?);
+    `, [user.id, user.name, user.lastname, user.passwordSHA256, user.type])
 }
 
 export async function updateUser(user: IUser){
