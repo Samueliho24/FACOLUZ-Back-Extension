@@ -3,7 +3,7 @@ import * as t from "../interfaces.ts"
 
 export async function openPeriod(data: t.newPeriod){
     const startDate = new Date(data.startDate)
-    const endDate = new Date(data.startDate)
+    const endDate = new Date(data.endDate)
     const values = [
         data.year,
         data.period,
@@ -44,12 +44,12 @@ export async function getCurrentPeriod(){
     return res
 }
 
-export async function changeEndDatePeriod(year: number, period: number, newEndDate: Date){
+export async function updatePeriod(year: number, period: number, newEndDate: Date, newStartDate: Date){
     const res = await execute(`
         UPDATE periods 
-        SET endDate = ?
+        SET endDate = ?, startDate = ?
         WHERE year = ? AND period = ?	
-    `, [newEndDate, year, period])
+    `, [newEndDate, newStartDate, year, period])
     return res
 }
 

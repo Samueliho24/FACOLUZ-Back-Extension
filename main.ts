@@ -14,7 +14,7 @@ import { getLastEnrollmentByStudentId, registerEnrollment, updateEnrollmentState
 import { getAllinvoices, getCurrentDayInvoices, getIdInvoice, getInvoicesById, getInvoicesByPayer, getinvoicesVerification, getinvoicesVerificationById, issueInvoice, verifyInvoice, cancelInvoice } from "./dbConnection/invoices.ts"
 import { deactivateModule, filterModules, getAllModules, getAssignedModulesByCourse, getSearchedModule, setModule, getModulesByCourse } from "./dbConnection/modules.ts"
 import { getPaymentsByInvoice, makePayment } from "./dbConnection/payments.ts"
-import { changeEndDatePeriod, closePeriod, getCurrentPeriod, openPeriod, getPeriods, getActivePeriods, getPeriodById} from "./dbConnection/period.ts"
+import { updatePeriod, closePeriod, getCurrentPeriod, openPeriod, getPeriods, getActivePeriods, getPeriodById} from "./dbConnection/period.ts"
 import { openSection, getSections, getCurrentSection, closeSection, getSectionByModule, getStudentsInSection, getSectionByPeriod} from "./dbConnection/section.ts"
 import { getReportInfo } from "./dbConnection/reports.ts"
 import { deactivateStudent, filterStudents, getEnrolledStudentsByModule, getStudentById, getStudents, registerStudents, getStudentCardInfo } from "./dbConnection/students.ts"
@@ -231,10 +231,10 @@ app.get('/api/getCurrentPeriod', mw.departmentWorker, async (req, res) => {
 	}
 })
 
-app.patch('/api/changeEndDatePeriod', mw.departmentWorker, async (req, res) => {
-	const {year, period, newEndDate} = req.body
+app.patch('/api/period', mw.departmentWorker, async (req, res) => {
+	const {year, period, newEndDate, newStartDate} = req.body
 	try{
-		const dbResponse = await changeEndDatePeriod(year, period, newEndDate)
+		const dbResponse = await updatePeriod(year, period, newEndDate, newStartDate)
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
