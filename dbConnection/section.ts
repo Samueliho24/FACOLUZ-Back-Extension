@@ -31,9 +31,15 @@ export async function openSection(data: t.newSection) {
 
 export async function getSections(id: string) {
     const res = await query(`
-        SELECT s.id, s.periodId, m.description, s.moduleId, s.code, 
-                s.quota, s.status,
-                GROUP_CONCAT(DISTINCT CONCAT(t.name, ' ', t.lastName) 
+        SELECT 
+            s.id, 
+            s.periodId, 
+            m.description, 
+            s.moduleId, 
+            s.code, 
+            s.quota, 
+            s.status,
+            GROUP_CONCAT(DISTINCT CONCAT(t.name, ' ', t.lastName) 
                 ORDER BY st.evaluationOrder SEPARATOR ' / ') AS teachers
         FROM sections s 
         JOIN modules m ON s.moduleId = m.id 
