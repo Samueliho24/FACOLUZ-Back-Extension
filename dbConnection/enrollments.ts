@@ -194,7 +194,7 @@ export async function getEnrollmentCountBySection(sectionId: string) {
         FROM enrollments 
         WHERE sectionId = ?
     `, [sectionId]);
-    return res[0]?.enrolledCount || 0;
+    return Number(res[0]?.enrolledCount) ?? 0;
 }
 
 export async function verifyAndUpdateEnrollment(invoiceId: string){

@@ -889,7 +889,7 @@ app.get('/api/getEnrollmentCount/:sectionId', mw.departmentWorker, async (req, r
     const { sectionId } = req.params;
     try {
         const count = await getEnrollmentCountBySection(sectionId);
-        res.status(200).send({ count });
+        res.status(200).send({ count: count });
     } catch (err) {
         console.log(err);
         res.status(500).send({ error: 'Error al obtener conteo de inscritos' });
