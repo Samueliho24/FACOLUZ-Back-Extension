@@ -8,7 +8,7 @@ import { BuildReport } from "./PdfModels/DailyReport.ts"
 import { buildCertificate } from "./PdfModels/certificate.ts"
 import { buildCarnet } from "./PdfModels/carnet.ts"
 import { login } from "./dbConnection/system.ts"
-import { getCertificateInfo, getCertificateList } from "./dbConnection/certificates.ts"
+import { getCertificateInfo, getCertificateList, getCertificatesByStudent } from "./dbConnection/certificates.ts"
 import { filterCourses, getAllCourses, setCourse, updateAssignedModulesForCourse } from "./dbConnection/courses.ts"
 import { getLastEnrollmentByStudentId, registerEnrollment, updateEnrollmentState, getStudentCohorts, createStudentCohort, getEnrollmentHistory,getApprovedModulesByStudent, getEnrollmentCountBySection } from "./dbConnection/enrollments.ts"
 import { getAllinvoices, getCurrentDayInvoices, getIdInvoice, getInvoicesById, getInvoicesByPayer, getinvoicesVerification, getinvoicesVerificationById, issueInvoice, verifyInvoice, cancelInvoice } from "./dbConnection/invoices.ts"
@@ -611,6 +611,17 @@ app.get("/api/certificate/:certificateId", mw.departmentWorker, async(req, res) 
 app.get("/api/certificateList/", mw.departmentWorker, async(req, res) => {
 	try{
 		const dbResponse = await getCertificateList();
+		res.status(200).send(dbResponse)
+	}catch(err){
+		console.log(err)
+		res.status(500).send(err)
+	}
+})
+
+app.get("/api/certificateList/:studentId", mw.departmentWorker, async(req, res) => {
+	try{
+		const studentId: number = req.params.studentId;
+		const dbResponse = await getCertificatesByStudent(studentId);
 		res.status(200).send(dbResponse)
 	}catch(err){
 		console.log(err)
