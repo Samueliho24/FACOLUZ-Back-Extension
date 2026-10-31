@@ -123,9 +123,6 @@ CREATE TABLE `enrollment_partial_scores` (
 --   CONSTRAINT `fk_module` FOREIGN KEY (`moduleId`) REFERENCES `modules` (`id`)
 -- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Table structure for table `invoices`
---
 
 CREATE TABLE `billables` (
   `id` uuid NOT NULL DEFAULT uuid(),
@@ -141,17 +138,20 @@ INSERT INTO `billables`(`name`, `price`) VALUES
   ('Reimpresion de certificado', 5);
 
 CREATE TABLE `invoices` (
-  `id` uuid NOT NULL DEFAULT uuid(),
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
   `billableid` uuid NOT NULL,
   `chargedAmount` float NOT NULL,
   `exchangeRate` float NOT NULL,
   `date` datetime NOT NULL DEFAULT current_timestamp(),
   `comments` text DEFAULT NULL,
-  `status` enum('Pendiente','Pagado','Anulada') NOT NULL DEFAULT 'Pendiente',
+  `status` enum('Pendiente','Pagado','Anulada','Excedente') NOT NULL DEFAULT 'Pendiente',
   `StudentIdentification` int(11) NOT NULL,
   `quantity` int(11) NOT NULL,
+  `overpaidTo` bigint UNSIGNED DEFAULT NULL,
   PRIMARY KEY (`id`),
-  CONSTRAINT `fk_invoices_billable` FOREIGN KEY (`billableid`) REFERENCES `billables` (`id`)
+  CONSTRAINT `fk_invoices_billable` FOREIGN KEY (`billableid`) REFERENCES `billables` (`id`),
+  CONSTRAINT `fk_invoices_student` FOREIGN KEY(`StudentIdentification`) REFERENCES `students` (`studentsIdentification`),
+  CONSTRAINT `fk_invoices_excedentInvoice` FOREIGN KEY(`overpaidTo`) REFERENCES `invoices` (`id`)
 
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
@@ -247,7 +247,7 @@ UNLOCK TABLES;
 
 CREATE TABLE `payments` (
   `id` uuid NOT NULL DEFAULT uuid(),
-  `invoiceId` uuid NOT NULL,
+  `invoiceId` bigint UNSIGNED NOT NULL,
   `receivedPaymentMethod` enum('Efectivo','Transferencia','Dolares','Exoneracion'),
   `returnedPaymentMethod` enum('Efectivo','Transferencia','Dolares','Exoneracion'),
   `paidAmount` float NOT NULL,
