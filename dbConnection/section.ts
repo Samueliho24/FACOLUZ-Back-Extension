@@ -52,7 +52,7 @@ export async function getSections(id: string) {
     return res
 }
 
-export async function getCurrentSection() {
+export async function getActiveSections() {
     const res = await query(`
         SELECT id, periodId, moduleId, teacherId, code, quota, status FROM sections
         WHERE status = 'Activa'

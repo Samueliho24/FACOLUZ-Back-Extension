@@ -1,13 +1,14 @@
 export interface Iinvoice{
-    id: string,
-    billableitem: string,
-    currency: string,
-    reference: string,
+    id: bigint | string,
+    billable: string,
+    chargedAmount: number,
+    exchangeRate: number,
     date: Date,
-    patientId: number,
-    patientName: string,
-    patientPhone: string,
-    amount: number,
-    changeRate: number,
-    status: string
+    comments: string,
+    status: string,
+    quantity: number,
+    overpaidTo: bigint | string,
+    name: string,
+    lastname: string,
+    studentIdentification: number
 }

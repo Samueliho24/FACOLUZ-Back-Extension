@@ -2,30 +2,29 @@ import { query, execute, transaction } from "../dbConnection.ts"
 import { getDolarPrice } from "../functions/getDolarPrice.ts";
 import { totalizePayments } from "../functions/totalizePayments.ts";
 import * as t from "../interfaces.ts"
+import { Iinvoice } from "../types/invoice.ts";
 import { getPaymentsByInvoice } from "./payments.ts";
 import { studentExist } from "./students.ts";
 
-//Obtener el ID de la siguiente factura a emitir (probar si este enfoque funciona correctamente)
-export async function getIdInvoice(){
-    const res = await query('SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', [Deno.env.get("BDD_DATABASE"), 'invoices'])
-    return res
-}
-
 //Obtener facturas por ID de paciente
 export async function getInvoicesById(studentId: string, page: number){	
-    const res = await query(`
+    const res: Iinvoice[] = await query(`
         SELECT 
             i.id,
+            b.name AS billable,
             i.chargedAmount,
             i.exchangeRate,
             i.date,
-            i.status,
             i.comments,
+            i.status,
+            s.studentsIdentification,
+            i.quantity
+            i.overpaidTo,
             s.name,
-            s.lastname,
-            s.studentsIdentification
-        FROM invoices i JOIN students s
-        ON i.StudentIdentification = s.studentsIdentification
+            s.lastname
+        FROM invoices i 
+        JOIN students s ON i.StudentIdentification = s.studentsIdentification
+        JOIN billables b ON i.billableid = b.id
         WHERE i.StudentIdentification = ?
         ORDER BY date DESC
         LIMIT 10 OFFSET ?
@@ -34,22 +33,27 @@ export async function getInvoicesById(studentId: string, page: number){
 }
 
 export async function getAllinvoices(page: number){	
-    const res = await query(`
+    const res: Iinvoice[] = await query(`
         SELECT 
             i.id,
+            b.name AS billable,
             i.chargedAmount,
             i.exchangeRate,
             i.date,
-            i.status,
             i.comments,
+            i.status,
+            s.studentsIdentification,
+            i.quantity
+            i.overpaidTo,
             s.name,
-            s.lastname,
-            s.studentsIdentification
-        FROM invoices i JOIN students s
-        ON i.StudentIdentification = s.studentsIdentification
+            s.lastname
+        FROM invoices i
+        JOIN students s ON i.StudentIdentification = s.studentsIdentification
+        JOIN billables b ON i.billableid = b.id
         ORDER BY i.date DESC
         LIMIT 10 OFFSET ?
     `, [(page-1)*10])
+
     return res	
 }
 
@@ -111,13 +115,20 @@ export async function getCurrentDayInvoices(page: number){
     const res = await query(`
         SELECT 
             i.id,
-            i.billableItem,
-            i.currency,
-            i.reference,
-            i.payerId,
+            b.name AS billable,
+            i.chargedAmount,
+            i.exchangeRate,
             i.date,
-            p.name,
-        FROM invoices i JOIN payer p ON	i.payerId = p.id
+            i.comments,
+            i.status,
+            s.studentsIdentification,
+            i.quantity
+            i.overpaidTo,
+            s.name,
+            s.lastname
+        FROM invoices i
+        JOIN students s ON i.StudentIdentification = s.studentsIdentification
+        JOIN billables b ON i.billableid = b.id
         ORDER BY i.date DESC
         LIMIT 10 OFFSET ?
     `, [(page - 1) * 10])
@@ -127,15 +138,22 @@ export async function getCurrentDayInvoices(page: number){
 export async function getInvoicesByPayer(page: number, identification: number){
 	const res = await query(`
 		SELECT 
-			i.id,
-			i.billableItem,
-			i.currency,
-			i.reference,
-			i.payerId,
-			i.date,
-			p.name,
-		FROM invoices i JOIN payer p ON	i.payerId = p.id
-		WHERE i.payerId = ?
+            i.id,
+            b.name AS billable,
+            i.chargedAmount,
+            i.exchangeRate,
+            i.date,
+            i.comments,
+            i.status,
+            s.studentsIdentification,
+            i.quantity
+            i.overpaidTo,
+            s.name,
+            s.lastname
+        FROM invoices i
+        JOIN students s ON i.StudentIdentification = s.studentsIdentification
+        JOIN billables b ON i.billableid = b.id
+		WHERE i.studentIdentification = ?
 		ORDER BY i.date DESC
 		LIMIT 10 OFFSET ?	
 	`, [identification, ((page-1)*10)])
@@ -173,4 +191,21 @@ export async function cancelInvoice(invoiceId: string){
     ]
 
     const _DbResponse = await transaction(queries, params);
+}
+
+export async function getOverPaidInvoices(studentId: number){
+    const res = await query(`
+        SELECT 
+            i.id,
+            i.chargedAmount,
+            SUM(p.paidAmount),
+            SUM(p.returnedAmount)
+        FROM payments p
+        JOIN invoices i ON p.invoiceId = i.id
+        WHERE 
+            i.status = 'Excedente' 
+            AND i.overpaidTo = null
+            AND i.StudentIdentification = ?
+    `, [studentId])
+    return res;
 }

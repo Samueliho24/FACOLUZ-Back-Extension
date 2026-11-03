@@ -134,7 +134,7 @@ export async function updateEnrollmentState(enrollmentId: string, newState: stri
 	return res
 }
 
-export async function getApprovedModulesByStudent(studentId: string, courseId: string) {
+export async function getModulesByStudent(studentId: string, courseId: string) {
     const res = await query(`
         SELECT DISTINCT sec.moduleId, eg.status
         FROM enrollments e
@@ -142,8 +142,7 @@ export async function getApprovedModulesByStudent(studentId: string, courseId: s
         JOIN enrollments_grade eg ON e.id = eg.enrollmentId
         JOIN student_cohorts sc ON e.cohortId = sc.id
         WHERE e.studentId = ? 
-          AND sc.courseId = ?
-          AND eg.status = 'Aprobado'
+        AND sc.courseId = ?
     `, [studentId, courseId]);
     return res.map((r: any) => r.moduleId);
 }

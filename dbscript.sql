@@ -30,10 +30,10 @@ CREATE TABLE `certificates` (
   `courseId` uuid NOT NULL,
   `date` date NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
-  KEY `certificates_students_FK` (`studentId`),
+  KEY `certificates_student_FK` (`studentId`),
   KEY `certificates_courses_FK` (`courseId`),
   CONSTRAINT `certificates_courses_FK` FOREIGN KEY (`courseId`) REFERENCES `courses` (`id`),
-  CONSTRAINT `certificates_students_FK` FOREIGN KEY (`studentId`) REFERENCES `students` (`id`)
+  CONSTRAINT `certificates_student_FK` FOREIGN KEY (`studentId`) REFERENCES `students` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 LOCK TABLES `certificates` WRITE;
@@ -73,7 +73,7 @@ CREATE TABLE `documents` (
   `studentId` uuid NOT NULL,
   `docType` int(11) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),
-  CONSTRAINT `documents_students_FK` FOREIGN KEY (`studentId`) REFERENCES `students` (`id`)
+  CONSTRAINT `documents_student_FK` FOREIGN KEY (`studentId`) REFERENCES `students` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 CREATE TABLE `enrollments` (
@@ -145,12 +145,12 @@ CREATE TABLE `invoices` (
   `date` datetime NOT NULL DEFAULT current_timestamp(),
   `comments` text DEFAULT NULL,
   `status` enum('Pendiente','Pagado','Anulada','Excedente') NOT NULL DEFAULT 'Pendiente',
-  `StudentIdentification` int(11) NOT NULL,
+  `studentIdentification` int(11) NOT NULL,
   `quantity` int(11) NOT NULL,
   `overpaidTo` bigint UNSIGNED DEFAULT NULL,
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_invoices_billable` FOREIGN KEY (`billableid`) REFERENCES `billables` (`id`),
-  CONSTRAINT `fk_invoices_student` FOREIGN KEY(`StudentIdentification`) REFERENCES `students` (`studentsIdentification`),
+  CONSTRAINT `fk_invoices_student` FOREIGN KEY(`studentIdentification`) REFERENCES `students` (`studentIdentification`),
   CONSTRAINT `fk_invoices_excedentInvoice` FOREIGN KEY(`overpaidTo`) REFERENCES `invoices` (`id`)
 
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
@@ -307,13 +307,13 @@ CREATE TABLE `sections_teachers` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 -- CREATE TABLE `scores` (
---   `studentsId` uuid DEFAULT NULL,
+--   `studentId` uuid DEFAULT NULL,
 --   `moduleId` uuid DEFAULT NULL,
 --   `score` int(2) DEFAULT NULL,
---   KEY `fk_student_scores` (`studentsId`),
+--   KEY `fk_student_scores` (`studentId`),
 --   KEY `fk_module_scores` (`moduleId`),
 --   CONSTRAINT `fk_module_scores` FOREIGN KEY (`moduleId`) REFERENCES `modules` (`id`),
---   CONSTRAINT `fk_student_scores` FOREIGN KEY (`studentsId`) REFERENCES `students` (`id`) ON UPDATE CASCADE
+--   CONSTRAINT `fk_student_scores` FOREIGN KEY (`studentId`) REFERENCES `students` (`id`) ON UPDATE CASCADE
 -- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
@@ -332,7 +332,7 @@ CREATE TABLE `students` (
   `lastname` varchar(20) NOT NULL,
   `photo` text DEFAULT NULL,
   `parentalPermission` text DEFAULT NULL,
-  `studentsIdentification` int(10) NOT NULL,
+  `studentIdentification` int(10) NOT NULL,
   `birthDate` date NOT NULL,
   `email` varchar(100) NOT NULL,
   `phone` int(10) unsigned NOT NULL,
@@ -342,7 +342,7 @@ CREATE TABLE `students` (
   `status` enum('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
   `section` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `studentsId` (`studentsIdentification`)
+  KEY `studentId` (`studentIdentification`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
