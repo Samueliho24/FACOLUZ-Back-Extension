@@ -8,7 +8,7 @@ export async function filterStudents(param: string){
 		WHERE
 			name LIKE ?
 			OR lastname LIKE ?
-			OR CAST(studentsidentification AS CHAR) LIKE ?
+			OR CAST(studentIdentification AS CHAR) LIKE ?
 	`, [q, q, q])
 	return res;
 }
@@ -24,7 +24,7 @@ export async function registerStudents(user: t.newStudent){
         const instructionGrade = user.instructionGrade
 
     const _res = await execute(`
-        INSERT INTO students(name, lastName, studentsIdentification, birthDate, email, phone, address, instructionGrade)
+        INSERT INTO students(name, lastName, studentIdentification, birthDate, email, phone, address, instructionGrade)
         VALUES(?, ?, ?, ?, ?, ?, ?, ?) 	
     `, [name, lastName, identification, birthDate, email, phone, address, instructionGrade])
 }
@@ -32,7 +32,7 @@ export async function registerStudents(user: t.newStudent){
 export async function getStudentById(id: number){
     const res = await query(`
         SELECT *, status AS studentStatus FROM students
-        WHERE studentsIdentification = ?
+        WHERE studentIdentification = ?
     `, [id])
     return res
 }
@@ -49,7 +49,7 @@ export async function getEnrolledStudentsByModule(moduleId: number){
 		SELECT 
             s.name,
             s.lastName,
-            s.studentsIdentification,
+            s.studentIdentification,
             s.email,
             s.phone,
             s.address,
@@ -90,7 +90,7 @@ export async function getStudentCardInfo(studentId: string){
             id,
             name,
             lastname,
-            studentsIdentification
+            studentIdentification
         FROM students
         WHERE id = ?
     `, [studentId])
