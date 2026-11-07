@@ -5,7 +5,7 @@ export async function getCertificateInfo(certificateId: string){
 		select
 			s.name,
 			s.lastname,
-			s.studentsIdentification,
+			s.studentIdentification,
 			c2.description as course_name,
 			c.id as certificate_id,
 			c.date 
@@ -20,7 +20,7 @@ export async function getCertificateList(){
 		select
 			s.name,
 			s.lastname,
-			s.studentsIdentification,
+			s.studentIdentification,
 			c2.description as course_name,
 			c.id as certificate_id,
 			c.date 
@@ -34,12 +34,12 @@ export async function getCertificatesByStudent(studentsIdentification: number){
 		SELECT 
 			s.name,
 			s.lastname,
-			s.studentsIdentification,
+			s.studentIdentification,
 			c2.description as course_name,
 			c.id as certificate_id,
 			c.date
 		from certificates c join courses c2 on c2.id = c.courseId join students s on c.studentId = s.id 
-		WHERE s.studentsIdentification = ?
+		WHERE s.studentIdentification = ?
 	`, [studentsIdentification])
 	return res;
 }
