@@ -11,10 +11,10 @@ export async function getReportInfo(start: Date, end: Date){
             i.exchangeRate,
             s.name,
             s.lastname,
-            s.studentsidentification,
+            s.studentidentification,
             b.name as billableitem
         FROM invoices i
-        JOIN students s ON s.studentsIdentification = i.StudentIdentification
+        JOIN students s ON s.studentIdentification = i.StudentIdentification
         JOIN billables b ON b.id = i.billableid
         WHERE i.date > ? AND i.date < ?
     `, [start, end])

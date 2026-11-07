@@ -1,6 +1,9 @@
 import express from "npm:express@4.18.2";
-import { cancelInvoice, getAllinvoices, getInvoicesById, getinvoicesVerification, getinvoicesVerificationById, issueInvoice } from "../dbConnection/invoices.ts";
+import { cancelInvoice, getAllinvoices, getInvoicesById, getPendingInvoices, getinvoicesVerificationById, issueInvoice } from "../dbConnection/invoices.ts";
 import * as mw from "../middlewares.ts"
+import { getPaymentsByInvoice } from "../dbConnection/payments.ts";
+import { Iinvoice } from "../types/invoice.ts";
+import { parseInvoiceForJson } from "../functions/parseInvoices.ts";
 
 const invoiceRoutes = express.Router()
 
@@ -8,8 +11,9 @@ const invoiceRoutes = express.Router()
 invoiceRoutes.get('/pending/:page', mw.departmentWorker, async (req, res) => {
     const page = Number(req.params.page)
     try{
-        const dbResponse = await getinvoicesVerification(page)
-        res.status(200).send(dbResponse)
+        const dbResponse: Iinvoice[] = await getPendingInvoices(page)
+        const invoices = dbResponse.map(item => parseInvoiceForJson(item))
+        res.status(200).send(invoices)
     }catch(err){
         console.log(err)
         res.status(404).send('Error del servidor, No pudo traer facturas por verificar')
@@ -22,20 +26,22 @@ invoiceRoutes.get('/pending/:patientId/:page', mw.departmentWorker, async (req, 
     const page = Number(req.params.page)
     try{
         const dbResponse = await getinvoicesVerificationById(patientId, page)
-        res.status(200).send(dbResponse)
+        const invoices = dbResponse.forEach(item => parseInvoiceForJson(item))
+        res.status(200).send(invoices)
     }catch(err){
         console.log(err)
         res.status(404).send('Error del servidor, No pudo traer facturas deacuerdo al ID proporcionado')
     }
 })
 
-//Obtener citas por cedula de estudiante
+//Obtener facturas por cedula de estudiante
 invoiceRoutes.get('/:studentId/:page', mw.departmentWorker, async (req, res) => {
     const studentId = req.params.studentId
     const page = Number(req.params.page)
     try{
         const dbResponse = await getInvoicesById(studentId, page)
-        res.status(200).send(dbResponse)
+        const invoices = dbResponse.map(item => parseInvoiceForJson(item))
+        res.status(200).send(invoices)
     }catch(err){
         console.log(err)
         res.status(404).send('Usuario no encontrado')
@@ -47,10 +53,23 @@ invoiceRoutes.get('/:page', mw.departmentWorker, async (req, res) => {
     const page = Number(req.params.page)
     try{
         const dbResponse = await getAllinvoices(page)
-        res.status(200).send(dbResponse)
+        const invoices = dbResponse.map(item => parseInvoiceForJson(item))
+        res.status(200).send(invoices)
     }catch(err){
         console.log(err)
         res.status(404).send('Usuario no encontrado')
+    }
+})
+
+invoiceRoutes.get("/:invoiceId/payments", mw.departmentWorker, async(req, res) => {
+    try{
+        const invoiceId = req.params.invoiceId
+        const dbResponse = await getPaymentsByInvoice(invoiceId);
+        const invoices = dbResponse.map(item => parseInvoiceForJson(item))
+        res.status(200).send(invoices)
+    }catch(err){
+        console.log(err)
+        res.status(500).send(err)
     }
 })
 
@@ -69,7 +88,7 @@ invoiceRoutes.post('/', mw.departmentWorker, async (req, res) => {
     }
 })
 
-invoiceRoutes.delete("/api/invoice/:invoiceId", mw.departmentWorker, async(req, res) => {
+invoiceRoutes.delete("/:invoiceId", mw.departmentWorker, async(req, res) => {
     try{
         const invoiceId: string = req.params.invoiceId;
         const _dbResponse = await cancelInvoice(invoiceId)

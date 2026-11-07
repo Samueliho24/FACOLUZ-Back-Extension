@@ -17,15 +17,15 @@ export async function getInvoicesById(studentId: string, page: number){
             i.date,
             i.comments,
             i.status,
-            s.studentsIdentification,
-            i.quantity
+            s.studentIdentification,
+            i.quantity,
             i.overpaidTo,
             s.name,
             s.lastname
         FROM invoices i 
-        JOIN students s ON i.StudentIdentification = s.studentsIdentification
+        JOIN students s ON i.StudentIdentification = s.studentIdentification
         JOIN billables b ON i.billableid = b.id
-        WHERE i.StudentIdentification = ?
+        WHERE i.StudentIdentification LIKE ?
         ORDER BY date DESC
         LIMIT 10 OFFSET ?
     `, [ studentId, (page-1)*10])
@@ -42,13 +42,13 @@ export async function getAllinvoices(page: number){
             i.date,
             i.comments,
             i.status,
-            s.studentsIdentification,
-            i.quantity
+            s.studentIdentification,
+            i.quantity,
             i.overpaidTo,
             s.name,
             s.lastname
         FROM invoices i
-        JOIN students s ON i.StudentIdentification = s.studentsIdentification
+        JOIN students s ON i.StudentIdentification = s.studentIdentification
         JOIN billables b ON i.billableid = b.id
         ORDER BY i.date DESC
         LIMIT 10 OFFSET ?
@@ -57,14 +57,21 @@ export async function getAllinvoices(page: number){
     return res	
 }
 
-export async function getinvoicesVerification(page: number){	
-    const res = await query(`
-        SELECT * FROM invoices WHERE status = 'Pendiente'
-        ORDER BY date DESC
-        LIMIT 10 OFFSET ?
-    `, [(page-1)*10])
-    return res	
+export async function getPendingInvoices(page: number): Promise<Iinvoice[]>{
+    try{
+        const res: Iinvoice[] = await query(`
+            SELECT * FROM invoices
+            WHERE status = 'Pendiente'
+            ORDER BY date DESC
+            LIMIT 10 OFFSET ?    
+        `)
+        return res
+    }catch(err){
+        console.log(err)
+        throw err
+    }
 }
+
 //Obtener facturas por verificar y por ID de paciente
 export async function getinvoicesVerificationById(patientId: string, page: number){	
     const res = await query(`
@@ -74,15 +81,6 @@ export async function getinvoicesVerificationById(patientId: string, page: numbe
         LIMIT 10 OFFSET ?
     `, [ patientId, (page-1)*10])
     return res	
-}
-//Verificar estado de la factura
-export async function verifyInvoice(idParam: number, status: string,){
-    const res = await execute(`
-        UPDATE invoices 
-        SET status = ?
-        WHERE id = ?	
-    `, [status, idParam])
-    return res
 }
 
 export async function issueInvoice(data: t.invoiceData){
@@ -121,13 +119,13 @@ export async function getCurrentDayInvoices(page: number){
             i.date,
             i.comments,
             i.status,
-            s.studentsIdentification,
-            i.quantity
+            s.studentIdentification,
+            i.quantity,
             i.overpaidTo,
             s.name,
             s.lastname
         FROM invoices i
-        JOIN students s ON i.StudentIdentification = s.studentsIdentification
+        JOIN students s ON i.StudentIdentification = s.studentIdentification
         JOIN billables b ON i.billableid = b.id
         ORDER BY i.date DESC
         LIMIT 10 OFFSET ?
@@ -145,13 +143,13 @@ export async function getInvoicesByPayer(page: number, identification: number){
             i.date,
             i.comments,
             i.status,
-            s.studentsIdentification,
-            i.quantity
+            s.studentIdentification,
+            i.quantity,
             i.overpaidTo,
             s.name,
             s.lastname
         FROM invoices i
-        JOIN students s ON i.StudentIdentification = s.studentsIdentification
+        JOIN students s ON i.StudentIdentification = s.studentIdentification
         JOIN billables b ON i.billableid = b.id
 		WHERE i.studentIdentification = ?
 		ORDER BY i.date DESC

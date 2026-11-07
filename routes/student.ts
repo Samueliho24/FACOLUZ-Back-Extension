@@ -137,7 +137,7 @@ studentRoutes.get("/:studentId/docs", mw.departmentWorker, async(req, res) => {
 })
 
 //Historial de inscripciones para un alumno
-studentRoutes.get('/history/:studentId', mw.departmentWorker, async (req, res) => {
+studentRoutes.get('/:studentId/history', mw.departmentWorker, async (req, res) => {
     const { studentId } = req.params;
     console.log(studentId)
     try {

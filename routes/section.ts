@@ -46,8 +46,9 @@ sectionRoutes.get('/active', mw.departmentWorker, async (req, res) => {
         res.status(500).send('Error al obtener las secciónes')
     }
 })
-/*
-sectionRoutes.get('/api/getSectionByModule/:moduleId', mw.departmentWorker, async (req, res) => {
+
+// De verdad que no se que hace esto
+sectionRoutes.get('/module/:moduleId', mw.departmentWorker, async (req, res) => {
     const moduleId = req.params.moduleId
     try {
         const dbResponse = await getSectionByModule(moduleId)
@@ -55,7 +56,7 @@ sectionRoutes.get('/api/getSectionByModule/:moduleId', mw.departmentWorker, asyn
     } catch (err) {
         res.status(500).send('Error al obtener las secciones')
     }
-})*/
+})
 
 // Obtener secciones de un modulo
 sectionRoutes.get('/module/:moduleId', mw.departmentWorker, async (req, res) => {

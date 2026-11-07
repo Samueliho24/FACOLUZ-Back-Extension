@@ -47,3 +47,21 @@ export async function updatePassword(userId: string, newPassword: string){
         UPDATE users SET passwordSHA256 = ? WHERE id = ?	
     `, [newPassword, userId])
 }
+
+export async function updateUserType(userId: string, newType: number){
+    const _res = await execute(`
+        UPDATE users SET type = ? WHERE id = ?	
+    `, [newType, userId])
+}
+
+export async function deactivateUser(userId: number){
+    const _res = await execute(`
+        UPDATE users SET active = false WHERE id = ? 
+    `, [userId]) 
+}
+
+export async function reactivateUser(userId: number){
+    const _res = await execute(`
+        UPDATE users SET active = true WHERE id = ? 
+    `, [userId]) 
+}

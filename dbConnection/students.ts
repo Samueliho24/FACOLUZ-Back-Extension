@@ -67,7 +67,7 @@ export async function getEnrolledStudentsByModule(moduleId: number){
 export async function studentExist(studentIdentification: number){
     console.log(studentIdentification)
     const res = await query(`
-        SELECT id FROM students WHERE studentsIdentification = ?    
+        SELECT id FROM students WHERE studentIdentification = ?    
     `, [studentIdentification])
 
     if (res.length > 0){

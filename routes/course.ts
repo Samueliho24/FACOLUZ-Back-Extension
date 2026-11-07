@@ -19,7 +19,7 @@ courseRoutes.post('/', mw.departmentWorker, async (req, res) => {
 })
 
 //Actualizar o asignar modulos a un curso 
-courseRoutes.patch('/:courseId/modules', mw.departmentWorker, async (req, res) => {
+courseRoutes.put('/:courseId/modules', mw.departmentWorker, async (req, res) => {
     const { moduleIds } = req.body
     const courseId = req.params.courseId
     try{
@@ -77,5 +77,19 @@ courseRoutes.get('/:courseId/:studentId', mw.departmentWorker, async (req, res) 
         res.status(500).send(err);
     }
 });
+
+// Modulos aprobados de un curso para un estudiante
+courseRoutes.get('/:courseId/:studentId/approvedModules', mw.departmentWorker, async (req, res) => {
+    const courseId = req.params.courseId;
+    const studentId = req.params.approvedModules;
+
+    try{
+        const modules = await getModulesByStudent(studentId, courseId);
+        res.status(200).send(modules);
+    }catch(err){
+        console.log(err)
+        res.status(500).send(err)
+    }
+})
 
 export default courseRoutes;
