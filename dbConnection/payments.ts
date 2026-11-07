@@ -5,7 +5,18 @@ import { verifyAndUpdateEnrollment } from "./enrollments.ts";
 
 export const getPaymentsByInvoice = async(invoiceId: string) => {
     const res = await query(`
-        SELECT * FROM payments WHERE invoiceId = ?
+        SELECT 
+            id,
+            receivedPaymentMethod,
+            returnedPaymentMethod,
+            paidAmount,
+            returnedAmount,
+            reference,
+            returnReference,
+            comments,
+            date,
+            exchangeRate
+        FROM payments WHERE invoiceId = ?
     `, [invoiceId])
     return res;
 }

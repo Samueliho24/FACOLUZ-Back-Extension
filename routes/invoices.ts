@@ -7,6 +7,18 @@ import { parseInvoiceForJson } from "../functions/parseInvoices.ts";
 
 const invoiceRoutes = express.Router()
 
+// Obtener pagos para una factura
+invoiceRoutes.get('/:invoiceId/payments', mw.departmentWorker, async(req, res) => {
+    try{
+        const invoiceId = req.params.invoiceId;
+        const dbResponse = await getPaymentsByInvoice(invoiceId);
+        res.status(200).send(dbResponse)
+    }catch(err){
+        console.log(err)
+        res.status(500).send(err)
+    }
+})
+
 //Obtener facturas en estado pendiente
 invoiceRoutes.get('/pending/:page', mw.departmentWorker, async (req, res) => {
     const page = Number(req.params.page)
@@ -61,18 +73,6 @@ invoiceRoutes.get('/:page', mw.departmentWorker, async (req, res) => {
     }
 })
 
-invoiceRoutes.get("/:invoiceId/payments", mw.departmentWorker, async(req, res) => {
-    try{
-        const invoiceId = req.params.invoiceId
-        const dbResponse = await getPaymentsByInvoice(invoiceId);
-        const invoices = dbResponse.map(item => parseInvoiceForJson(item))
-        res.status(200).send(invoices)
-    }catch(err){
-        console.log(err)
-        res.status(500).send(err)
-    }
-})
-
 //Emitir nueva factura
 invoiceRoutes.post('/', mw.departmentWorker, async (req, res) => {
     try {
@@ -88,6 +88,7 @@ invoiceRoutes.post('/', mw.departmentWorker, async (req, res) => {
     }
 })
 
+// Reversar una factura
 invoiceRoutes.delete("/:invoiceId", mw.departmentWorker, async(req, res) => {
     try{
         const invoiceId: string = req.params.invoiceId;
