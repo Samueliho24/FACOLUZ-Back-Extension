@@ -40,9 +40,9 @@ export const makePayment = async(data: t.IPayment) => {
         ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)    
     `, [
         data.InvoiceId,
-        Number(data.paidAmount).toFixed(2),
+        Number(data.paidAmount),
         data.receivedPaymentMethod,
-        Number(data.returnedAmount).toFixed(2),
+        Number(data.returnedAmount),
         data.returnedPaymentMethod,
         data.exchangeRate,
         (data.reference ? data.reference : null),
