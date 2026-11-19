@@ -26,6 +26,11 @@ services:
       BDD_CONECTION_LIMITS: ${BDD_CONECTION_LIMITS}
     volumes:
       - ${VOLUME_API}:/data
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./
+          target: /app
 
   extension-db:
     image: extension-db

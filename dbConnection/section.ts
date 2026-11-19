@@ -118,7 +118,7 @@ export async function getStudentsInSection(sectionId: string) {
             s.id, 
             s.name, 
             s.lastname, 
-            s.studentsIdentification, 
+            s.studentIdentification, 
             e.id AS enrollmentId,
             e.dateEnrollment, 
             e.status, 
@@ -137,7 +137,7 @@ export async function getStudentsInSection(sectionId: string) {
 }
 /*export async function getStudentsInSection(sectionId: string) {
     const res = await query(`
-        SELECT s.id, s.name, s.lastname, s.studentsIdentification, e.dateEnrollment, e.status, eg.status As gradeStatus
+        SELECT s.id, s.name, s.lastname, s.studentIdentification, e.dateEnrollment, e.status, eg.status As gradeStatus
         FROM enrollments e 
         JOIN students s ON e.studentId = s.id JOIN enrollments_grade eg ON e.id = eg.enrollmentId 
         WHERE e.sectionId = ? AND eg.status = 'Inscrito'

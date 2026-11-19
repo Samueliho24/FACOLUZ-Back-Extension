@@ -47,32 +47,6 @@ sectionRoutes.get('/active', mw.departmentWorker, async (req, res) => {
     }
 })
 
-// De verdad que no se que hace esto
-sectionRoutes.get('/module/:moduleId', mw.departmentWorker, async (req, res) => {
-    const moduleId = req.params.moduleId
-    try {
-        const dbResponse = await getSectionByModule(moduleId)
-        res.status(200).send(dbResponse)
-    } catch (err) {
-        res.status(500).send('Error al obtener las secciones')
-    }
-})
-
-// Obtener secciones de un modulo
-sectionRoutes.get('/module/:moduleId', mw.departmentWorker, async (req, res) => {
-    const { moduleId } = req.params;
-    const { sectionCode, periodId } = req.query;
-    console.log(moduleId, sectionCode, periodId)
-    try {
-        const cleanPeriodId = periodId?.replace(/\/$/, '');
-        const dbResponse = await getSectionByModule(moduleId, sectionCode, cleanPeriodId);
-        res.status(200).send(dbResponse);
-    } catch (err) {
-        console.log(err);
-        res.status(500).send(err);
-    }
-});
-
 sectionRoutes.get('/:sectionId/students', mw.departmentWorker, async (req, res) => {
     const sectionId = req.params.sectionId
     try{

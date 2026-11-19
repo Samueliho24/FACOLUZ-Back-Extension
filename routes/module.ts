@@ -2,6 +2,7 @@ import express from "npm:express@4.18.2";
 import * as mw from '../middlewares.ts'
 import { deactivateModule, filterModules, getAllModules, getSearchedModule, setModule } from "../dbConnection/modules.ts";
 import { getEnrolledStudentsByModule } from "../dbConnection/students.ts";
+import { getSectionByModule } from "../dbConnection/section.ts";
 
 const moduleRouter = express.Router();
 
@@ -64,4 +65,29 @@ moduleRouter.get('/:moduleId/students', mw.departmentWorker, async (req, res) =>
     }
 })
 
+// De verdad que no se que hace esto
+// moduleRouter.get('/:moduleId/sections', mw.departmentWorker, async (req, res) => {
+//     const { moduleId } = req.params;
+//     const { sectionCode, periodId } = req.query;
+//     console.log(moduleId, sectionCode, periodId)
+//     try {
+//         const cleanPeriodId = periodId?.replace(/\/$/, '');
+//         const dbResponse = await getSectionByModule(moduleId, sectionCode, cleanPeriodId);
+//         res.status(200).send(dbResponse);
+//     } catch (err) {
+//         console.log(err);
+//         res.status(500).send(err);
+//     }
+// });
+
+// Obtener secciones de un modulo
+moduleRouter.get('/:moduleId/sections', mw.departmentWorker, async (req, res) => {
+    const moduleId = req.params.moduleId
+    try {
+        const dbResponse = await getSectionByModule(moduleId)
+        res.status(200).send(dbResponse)
+    } catch (err) {
+        res.status(500).send('Error al obtener las secciones')
+    }
+})
 export default moduleRouter;
