@@ -1,6 +1,7 @@
 import express from "npm:express@4.18.2";
 import * as mw from "../middlewares.ts"
 import { closePeriod, getActivePeriods, getCurrentPeriod, getPeriods, openPeriod, updatePeriod } from "../dbConnection/period.ts";
+import { getSectionScores } from "../dbConnection/scores.ts";
 
 const periodRoutes = express.Router();
 
@@ -34,6 +35,20 @@ periodRoutes.get('/', mw.departmentWorker, async (req, res) => {
         res.status(500).send(err)
     }
 })
+
+periodRoutes.get('/:periodId/section/:sectionCode/scores', mw.departmentWorker, async(req, res) => {
+    try{
+        const periodId = req.params.periodId;
+        const sectionCode = req.params.sectionCode;
+
+        const dbResponse = await getSectionScores(periodId, sectionCode)
+        res.status(200).send(dbResponse);
+    }catch(err){
+        console.log(err)
+        res.status(500).send(err)
+    }
+})
+
 
 periodRoutes.get('/current', mw.departmentWorker, async (req, res) => {
     try{

@@ -1,9 +1,10 @@
 import express from "npm:express@4.18.2";
 import * as mw from '../middlewares.ts'
-import { getEnrollmentHistory, getLastEnrollmentByStudentId } from "../dbConnection/enrollments.ts";
+import { createStudentCohort, getEnrollmentHistory, getLastEnrollmentByStudentId } from "../dbConnection/enrollments.ts";
 import { deactivateStudent, filterStudents, getStudentById, getStudentCardInfo, getStudents, registerStudents } from "../dbConnection/students.ts";
 import { buildCarnet } from "../PdfModels/carnet.ts";
 import { getDocumentsList } from "../dbConnection/documents.ts";
+import { ICreateStudentCohort } from "../types/ICreateStudentCohort.ts";
 
 const studentRoutes = express.Router();
 
@@ -43,9 +44,20 @@ studentRoutes.post("/:studentId/deactivate", mw.departmentWorker, async(req, res
     }
 })
 
+studentRoutes.post('/cohort', mw.departmentWorker, async(req, res) => {
+    try{
+        const data: ICreateStudentCohort = req.body;
+        const dbResponse = await createStudentCohort(data)
+        res.status(200).send(dbResponse)
+    }catch(err){
+        console.log(err)
+        res.status(500).send(err)
+    }
+})
+
 //Obtener ultima inscripcion de un estudiante
 studentRoutes.get('/:studentId/lastEnrollment', mw.departmentWorker, async (req, res) => {
-    const id = Number(req.params.id)
+    const id = Number(req.params.studentId)
     try{
         const dbResponse = await getLastEnrollmentByStudentId(id)
         if(dbResponse.length == 0){

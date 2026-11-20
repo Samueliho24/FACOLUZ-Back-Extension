@@ -1,7 +1,7 @@
 import express from "npm:express@4.18.2";
 import * as mw from '../middlewares.ts'
 import { filterCourses, getAllCourses, setCourse, updateAssignedModulesForCourse } from "../dbConnection/courses.ts";
-import { getAssignedModulesByCourse } from "../dbConnection/modules.ts";
+import { getAssignedModulesByCourse, getModulesByCourse } from "../dbConnection/modules.ts";
 import { getModulesByStudent } from "../dbConnection/enrollments.ts";
 
 const courseRoutes = express.Router();
@@ -35,7 +35,7 @@ courseRoutes.put('/:courseId/modules', mw.departmentWorker, async (req, res) => 
 courseRoutes.get('/:courseId/modules', mw.departmentWorker, async (req, res) => {
     const courseId = req.params.courseId
     try{
-        const dbResponse = await getAssignedModulesByCourse(courseId)
+        const dbResponse = await getModulesByCourse(courseId)
         res.status(200).send(dbResponse)		
     }catch(err){
         console.log(err)

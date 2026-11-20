@@ -215,13 +215,13 @@ export async function updateScore(data: {
         throw error;
     }
 }
-export async function getGradeStudentsBySection(periodId: string, sectionCode: string) {
+export async function getSectionScores(periodId: string, sectionCode: string) {
     try {
         const querySQL = `
             WITH LatestGrades AS (
                 SELECT 
                     e.studentId,
-                    s.studentsIdentification AS identification,
+                    s.studentIdentification AS identification,
                     CONCAT(s.name, ' ', s.lastname) AS fullName,
                     m.description AS module,
                     eg.score AS finalScore,

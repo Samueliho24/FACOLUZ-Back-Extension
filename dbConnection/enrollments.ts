@@ -1,5 +1,7 @@
 import exp from "node:constants";
 import { query, execute } from "../dbConnection.ts"
+import { ICreateStudentCohort } from "../types/ICreateStudentCohort.ts";
+import { IRegisterEnrollment } from "../types/IRegisterEnrollment.ts";
 /*
 export async function registerEnrollment(studentId: string, sectionId: string) {
 	const enrollmentId = crypto.randomUUID()
@@ -32,15 +34,9 @@ export async function getLastEnrollmentByStudentId(id: number) {
 }
 */
 
-export async function registerEnrollment(data: any) {
+export async function registerEnrollment(data: IRegisterEnrollment) {
     const enrollmentId = crypto.randomUUID();
-    const {
-        studentId,
-        sectionId,
-        cohortId,
-        enrollmentType = 'Regular',
-        parentEnrollmentId = null
-    } = data;
+    console.log(data)
 
     // Validar cupo de la sección
     const cupoRes = await query(`
@@ -49,7 +45,7 @@ export async function registerEnrollment(data: any) {
         LEFT JOIN enrollments e ON e.sectionId = s.id 
         WHERE s.id = ?
         GROUP BY s.id
-    `, [sectionId]);
+    `, [data.sectionId]);
     
     if (cupoRes[0] && cupoRes[0].enrolled >= cupoRes[0].quota) {
         throw new Error('Sección sin cupo disponible');
@@ -58,7 +54,7 @@ export async function registerEnrollment(data: any) {
     const res1 = await execute(`
         INSERT INTO enrollments(id, studentId, sectionId, cohortId, enrollmentType, parentEnrollmentId, dateEnrollment, status)
         VALUES(?, ?, ?, ?, ?, ?, NOW(), ?)
-    `, [enrollmentId, studentId, sectionId, cohortId, enrollmentType, parentEnrollmentId, 'Deuda']);
+    `, [enrollmentId, data.studentId, data.sectionId, data.cohortId, data.enrollmentType, data.parentEnrollmentId ?? null, 'Deuda']);
 
     await execute(`
         INSERT INTO enrollments_grade(enrollmentId, status)
@@ -78,7 +74,7 @@ export async function getLastEnrollmentByStudentId(studentIdentification: number
             s.id AS studentId,
             s.name,
             s.lastname,
-            s.studentsIdentification,
+            s.studentIdentification,
             s.email,
             s.phone,
             s.photo,
@@ -106,7 +102,7 @@ export async function getLastEnrollmentByStudentId(studentIdentification: number
         JOIN modules m ON sec.moduleId = m.id
         LEFT JOIN student_cohorts sc ON e.cohortId = sc.id
         LEFT JOIN courses c ON sc.courseId = c.id
-        WHERE s.studentsIdentification = ?
+        WHERE s.studentIdentification = ?
         ORDER BY e.dateEnrollment DESC
         LIMIT 1
     `, [studentIdentification]);
@@ -173,18 +169,13 @@ export async function getEnrollmentHistory(studentId: string) {
     return res;
 }
 
-export async function createStudentCohort(data: {
-    studentId: string;
-    periodId: string;
-    sectionCode: string;
-    courseId: string;
-}) {
+export async function createStudentCohort(data: ICreateStudentCohort) {
     const cohortId = crypto.randomUUID();
     await execute(`
         INSERT INTO student_cohorts (id, studentId, periodId, sectionCode, courseId, enrollmentDate, status)
         VALUES (?, ?, ?, ?, ?, NOW(), 'En curso')
     `, [cohortId, data.studentId, data.periodId, data.sectionCode, data.courseId]);
-    return cohortId;
+    return {cohortId: cohortId};
 }
 
 export async function getEnrollmentCountBySection(sectionId: string) {

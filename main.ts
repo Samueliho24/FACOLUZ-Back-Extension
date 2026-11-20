@@ -49,20 +49,3 @@ app.use('/user', userRoutes)
 app.listen(port, "0.0.0.0", () => {
 	console.log(`Puerto: ${port}`)
 })
-
-
-//Pendientes
-
-// import { loadScores, getScoreByStudent, updateScore, getGradeStudentsBySection } from "./dbConnection/scores.ts";
-
-// app.get('/api/getGradeStudentsBySection/:periodId/:sectionCode', mw.departmentWorker, async (req, res) => {
-// 	try{
-// 		const periodId = req.params.periodId
-// 		const sectionCode = req.params.sectionCode
-// 		const dbResponse = await getGradeStudentsBySection(periodId, sectionCode)
-// 		res.status(200).send(dbResponse)
-// 	}catch(err){
-// 		console.log(err)
-// 		res.status(500).send(err)
-// 	}
-// })

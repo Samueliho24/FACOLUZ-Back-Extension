@@ -1,14 +1,15 @@
 import express from "npm:express@4.18.2";
 import * as mw from '../middlewares.ts'
 import { getEnrollmentCountBySection, getEnrollmentHistory, registerEnrollment, updateEnrollmentState } from "../dbConnection/enrollments.ts";
+import { IRegisterEnrollment } from "../types/IRegisterEnrollment.ts";
 
 const enrollmentRoute = express.Router();
 
 //Inscribir
 enrollmentRoute.post('/', mw.departmentWorker, async (req, res) => {
-    const {studentId, sectionId} = req.body
+    const enrollmentData: IRegisterEnrollment = req.body
     try{
-        const dbResponse = await registerEnrollment({studentId, sectionId})
+        const dbResponse = await registerEnrollment(enrollmentData)
         res.status(200).send(dbResponse)		
     }catch(err){
         console.log(err)
