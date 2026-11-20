@@ -106,7 +106,7 @@ export async function getScoreByStudent(studentIdentification: string, moduleId:
             s.id,
             s.name, 
             s.lastname, 
-            s.studentsIdentification, 
+            s.studentIdentification, 
             eg.id AS gradeId, 
             eg.score AS finalScore, 
             eg.status,
@@ -124,7 +124,7 @@ export async function getScoreByStudent(studentIdentification: string, moduleId:
         LEFT JOIN enrollments_grade AS eg ON eg.enrollmentId = e.id 
         LEFT JOIN enrollment_partial_scores AS eps1 ON eps1.enrollmentGradeId = eg.id AND eps1.evaluationOrder = 1
         LEFT JOIN enrollment_partial_scores AS eps2 ON eps2.enrollmentGradeId = eg.id AND eps2.evaluationOrder = 2
-        WHERE s.studentsIdentification = ? AND m.id = ?
+        WHERE s.studentIdentification = ? AND m.id = ?
         ORDER BY eg.dateScore DESC
         LIMIT 1
     `, [Number(studentIdentification), moduleId])

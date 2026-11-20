@@ -80,6 +80,12 @@ export async function closeSection(sectionId: string) {
 export async function getSectionByModule(moduleId: string, sectionCode?: string, periodId?: string) {
     let sql = `
         SELECT 
+            (
+				SELECT COUNT(*) 
+				FROM enrollments e
+				JOIN sections s2 ON e.sectionId = s2.id
+				WHERE s2.id = s.id
+			) AS count,
             s.id AS sectionId, 
             s.periodId, 
             s.moduleId, 
@@ -109,6 +115,10 @@ export async function getSectionByModule(moduleId: string, sectionCode?: string,
     
     const res = await query(sql, params);
     console.log(res)
+    const processedBigInts = res.map(i => {
+        i.count = Number(i.count)
+        return i
+    })
     return res;
 }
 
