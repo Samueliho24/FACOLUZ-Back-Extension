@@ -61,5 +61,16 @@ export const permissionsList = {
     modificarPermisosUsuario: 30,
     listarLogs: 31,
     listarConfiguracion: 32,
-    modificarPrecios: 33 
+    modificarPrecios: 33,
+    listarCursos: 34,
+    crearCurso: 35,
+    editarCurso: 36,
+    listarModulos: 37,
+    crearModulo: 38,
+    editarModulo: 39,
+    desactivarModulo: 40,
+    emitirReportes: 41,
+    listarSecciones: 42,
+    abrirSeccion: 43,
+    cerrarSeccion: 44
 }

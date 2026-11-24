@@ -1,10 +1,11 @@
-import express from "npm:express@4.18.2";
-import * as mw from "../middlewares.ts"
+import express, { type Request, type Response } from "npm:express@4.18.2";
 import { ChangePrices, GetBillables } from "../dbConnection/billables.ts";
+import { permissionsList } from "../functions/PermissionHelper.ts";
+import * as mw from "../middlewares.ts"
 
 const listsRoutes = express.Router()
 
-listsRoutes.get('/billables', mw.departmentWorker, async (req, res) => {
+listsRoutes.get('/billables', mw.anyValidToken, async (req: Request, res: Response) => {
     try{	
         const dbResponse = await GetBillables()
         res.status(200).send(dbResponse)
@@ -14,7 +15,7 @@ listsRoutes.get('/billables', mw.departmentWorker, async (req, res) => {
     }
 })
 
-listsRoutes.put('/prices', mw.departmentChief, async (req, res) => {
+listsRoutes.put('/prices', mw.singlePermission(permissionsList.modificarPrecios), async (req: Request, res: Response) => {
     const newPrices = req.body
     try{
         const _dbResponse = await ChangePrices(newPrices)

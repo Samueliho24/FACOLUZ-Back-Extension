@@ -1,11 +1,12 @@
-import express from "npm:express@4.18.2";
-import * as mw from '../middlewares.ts'
 import { getScoreByStudent, loadScores, updateScore } from "../dbConnection/scores.ts";
+import express, { type Request, type Response } from "npm:express@4.18.2";
+import * as mw from '../middlewares.ts'
+import { permissionsList } from "../functions/PermissionHelper.ts";
 
 const scoreRoutes = express.Router();
 
 // Subir notas
-scoreRoutes.post('/', mw.departmentWorker, async (req, res) => {
+scoreRoutes.post('/', mw.singlePermission(permissionsList.subirNotas), async (req: Request, res: Response) => {
     const data = req.body
     try{
         const dbResponse = await loadScores(data)
@@ -17,7 +18,7 @@ scoreRoutes.post('/', mw.departmentWorker, async (req, res) => {
 })
 
 //Obtener notas de un modulo para un estudiante 
-scoreRoutes.get('/module/:moduleId/:studentIdentification', mw.departmentWorker, async (req, res) => {
+scoreRoutes.get('/module/:moduleId/:studentIdentification', mw.singlePermission(permissionsList.listarNotas), async (req: Request, res: Response) => {
     try{
         const moduleId = req.params.moduleId
         const studentIdentification = req.params.studentIdentification
@@ -33,7 +34,7 @@ scoreRoutes.get('/module/:moduleId/:studentIdentification', mw.departmentWorker,
     }
 })
 
-scoreRoutes.patch('/', mw.departmentWorker, async (req, res) => {
+scoreRoutes.patch('/', mw.singlePermission(permissionsList.manejarModificacionNotas), async (req: Request, res: Response) => {
     const { gradeId, evaluationMode, finalScore, partials, reason } = req.body
     
     try {

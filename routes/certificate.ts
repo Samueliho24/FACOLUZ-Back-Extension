@@ -1,11 +1,18 @@
-import express from "npm:express@4.18.2";
-import * as mw from '../middlewares.ts'
 import { getCertificateInfo, getCertificateList, getCertificatesByStudent } from "../dbConnection/certificates.ts";
+import { permissionsList } from "../functions/PermissionHelper.ts";
 import { buildCertificate } from "../PdfModels/certificate.ts";
+import express, { type Request, type Response } from "npm:express@4.18.2";
+import * as mw from '../middlewares.ts'
 
 const certificateRoutes = express.Router();
 
-certificateRoutes.get("/:certificateId", mw.departmentWorker, async(req, res) => {
+const anyPermissionList = [
+    permissionsList.listarCertificados,
+    permissionsList.emitirCertificado,
+    permissionsList.reimprimirCertificado
+]
+
+certificateRoutes.get("/:certificateId", mw.singlePermission(permissionsList.reimprimirCertificado), async(req: Request, res: Response) => {
     try{
         const certificateId = req.params.certificateId;
         const dbResponse = await getCertificateInfo(certificateId)
@@ -27,7 +34,7 @@ certificateRoutes.get("/:certificateId", mw.departmentWorker, async(req, res) =>
     }
 })
 
-certificateRoutes.get("/", mw.departmentWorker, async(req, res) => {
+certificateRoutes.get("/", mw.multiplePermission(anyPermissionList), async(_req: Request, res: Response) => {
     try{
         const dbResponse = await getCertificateList();
         res.status(200).send(dbResponse)
@@ -37,7 +44,7 @@ certificateRoutes.get("/", mw.departmentWorker, async(req, res) => {
     }
 })
 
-certificateRoutes.get("/student/:studentId", mw.departmentWorker, async(req, res) => {
+certificateRoutes.get("/student/:studentId", mw.multiplePermission(anyPermissionList), async(req: Request, res: Response) => {
     try{
         const studentId: number = req.params.studentId;
         const dbResponse = await getCertificatesByStudent(studentId);

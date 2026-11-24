@@ -49,6 +49,22 @@ export function multiplePermission(permissions: number[]){
 	}
 }
 
+export function anyValidToken(req: Request, res: Response, next: NextFunction){
+	try{
+		const token = req.headers.authorization.split(" ")[1]
+		const payload: ITokenPayload = jwt.verify(token, secret)
+		if(isExpired(payload.exp)){
+			res.status(401).send('Sesion expirada')
+		}else{
+			next()
+		}
+
+	}catch(err){
+		console.log(err)
+		return res.status(400).send('Token no válido');
+	}
+}
+
 const upload = multer({dest: '/data/profilePics', })
 export const parseFormData = upload.single("file")
 

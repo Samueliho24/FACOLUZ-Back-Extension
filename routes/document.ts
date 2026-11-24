@@ -1,11 +1,13 @@
-import express from "npm:express@4.18.2";
-import * as mw from '../middlewares.ts'
-import { randomUUID } from "node:crypto";
+import express, { type Request, type Response } from "npm:express@4.18.2";
+import { permissionsList } from "../functions/PermissionHelper.ts";
 import { saveDocument } from "../dbConnection/documents.ts";
+import { randomUUID } from "node:crypto";
+import * as mw from '../middlewares.ts'
 
 const documentRoutes = express.Router();
 
-documentRoutes.post("/:studentId", mw.departmentWorker, mw.saveDoc, async (req, res) => {
+// Recibir documento de un estudiante
+documentRoutes.post("/:studentId", mw.singlePermission(permissionsList.subirDocumentoEstudiante), mw.saveDoc, async (req: Request, res: Response) => {
     const file = req.file
     try{
         const studentId = req.params.studentId;
@@ -21,7 +23,8 @@ documentRoutes.post("/:studentId", mw.departmentWorker, mw.saveDoc, async (req, 
     }
 })
 
-documentRoutes.get("/:docId", async(req, res) => {
+// Descargar documento de un estudiante
+documentRoutes.get("/:docId", mw.singlePermission(permissionsList.descargarDocumentoEstudiante),async(req: Request, res: Response) => {
     try{
         const docId = req.params.docId
         res.sendFile(`/data/documents/${docId}.pdf`, {root: '/'})

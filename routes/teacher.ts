@@ -1,7 +1,7 @@
-import express, { type Request, type Response } from "npm:express@4.18.2";
-import * as mw from '../middlewares.ts'
 import { deactivateTeacher, filterTeachers, getTeachers, registerTeacher } from "../dbConnection/teachers.ts";
+import express, { type Request, type Response } from "npm:express@4.18.2";
 import { permissionsList } from "../functions/PermissionHelper.ts";
+import * as mw from '../middlewares.ts'
 
 const teacherRoutes = express.Router();
 

@@ -1,13 +1,13 @@
-import express from "npm:express@4.18.2";
-import { login } from "../dbConnection/system.ts";
-import jwt from 'npm:jsonwebtoken'
-import { secret } from "../main.ts";
+import express, { type Request, type Response } from "npm:express@4.18.2";
 import { ITokenPayload } from "../types/ITokenPayload.ts";
+import { login } from "../dbConnection/system.ts";
+import { secret } from "../main.ts";
+import jwt from 'npm:jsonwebtoken'
 
 const sessionRoutes = express.Router();
 
-sessionRoutes.post('/login', async (req, res) => {
-    const {passwordHash} = req.body
+sessionRoutes.post('/login', async (req: Request, res: Response) => {
+    const { passwordHash } = req.body
     let dbResponse
     try{
         dbResponse = await login(req.body)

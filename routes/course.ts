@@ -1,13 +1,20 @@
-import express from "npm:express@4.18.2";
-import * as mw from '../middlewares.ts'
 import { filterCourses, getAllCourses, setCourse, updateAssignedModulesForCourse } from "../dbConnection/courses.ts";
-import { getAssignedModulesByCourse, getModulesByCourse } from "../dbConnection/modules.ts";
+import express, { type Request, type Response } from "npm:express@4.18.2";
 import { getModulesByStudent } from "../dbConnection/enrollments.ts";
+import { permissionsList } from "../functions/PermissionHelper.ts";
+import { getModulesByCourse } from "../dbConnection/modules.ts";
+import * as mw from '../middlewares.ts'
 
 const courseRoutes = express.Router();
 
+const anyPermissionList = [
+    permissionsList.crearCurso,
+    permissionsList.editarCurso,
+    permissionsList.listarCursos
+]
+
 //Crear curso
-courseRoutes.post('/', mw.departmentWorker, async (req, res) => {
+courseRoutes.post('/', mw.singlePermission(permissionsList.crearCurso), async (req: Request, res: Response) => {
     const {description} = req.body
     try{
         const _dbResponse = await setCourse(description)
@@ -19,7 +26,7 @@ courseRoutes.post('/', mw.departmentWorker, async (req, res) => {
 })
 
 //Actualizar o asignar modulos a un curso 
-courseRoutes.put('/:courseId/modules', mw.departmentWorker, async (req, res) => {
+courseRoutes.put('/:courseId/modules', mw.singlePermission(permissionsList.editarCurso), async (req: Request, res: Response) => {
     const { moduleIds } = req.body
     const courseId = req.params.courseId
     try{
@@ -32,7 +39,7 @@ courseRoutes.put('/:courseId/modules', mw.departmentWorker, async (req, res) => 
 })
 
 //Obtener modulos para un curso
-courseRoutes.get('/:courseId/modules', mw.departmentWorker, async (req, res) => {
+courseRoutes.get('/:courseId/modules', mw.singlePermission(permissionsList.listarCursos), async (req: Request, res: Response) => {
     const courseId = req.params.courseId
     try{
         const dbResponse = await getModulesByCourse(courseId)
@@ -44,7 +51,7 @@ courseRoutes.get('/:courseId/modules', mw.departmentWorker, async (req, res) => 
 })
 
 //Obtener todos los cursos
-courseRoutes.get('/', mw.departmentWorker, async (req, res) => {
+courseRoutes.get('/', mw.multiplePermission(anyPermissionList), async (req: Request, res: Response) => {
     try{
         const dbResponse = await getAllCourses()
         res.status(200).send(dbResponse)	
@@ -55,7 +62,7 @@ courseRoutes.get('/', mw.departmentWorker, async (req, res) => {
 })
 
 //Filtrar cursos por descripcion
-courseRoutes.get("/:param", mw.departmentWorker, async(req, res) => {
+courseRoutes.get("/:param", mw.multiplePermission(anyPermissionList), async(req: Request, res: Response) => {
     try{
         const param = req.params.param;
         const dbResponse = await filterCourses(param)
@@ -67,7 +74,7 @@ courseRoutes.get("/:param", mw.departmentWorker, async(req, res) => {
 })
 
 //Obtener modulos de un curso para un estudiante
-courseRoutes.get('/:courseId/:studentId', mw.departmentWorker, async (req, res) => {
+courseRoutes.get('/:courseId/:studentId', mw.singlePermission(permissionsList.listarCursos), async (req: Request, res: Response) => {
     const { studentId, courseId } = req.params;
     try {
         const modules = await getModulesByStudent(studentId, courseId);
@@ -79,7 +86,7 @@ courseRoutes.get('/:courseId/:studentId', mw.departmentWorker, async (req, res) 
 });
 
 // Modulos aprobados de un curso para un estudiante
-courseRoutes.get('/:courseId/:studentId/approvedModules', mw.departmentWorker, async (req, res) => {
+courseRoutes.get('/:courseId/:studentId/approvedModules', mw.singlePermission(permissionsList.inscribir), async (req: Request, res: Response) => {
     const courseId = req.params.courseId;
     const studentId = req.params.approvedModules;
 

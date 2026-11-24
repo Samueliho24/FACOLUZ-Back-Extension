@@ -1,14 +1,22 @@
-import express from "npm:express@4.18.2";
 import { cancelInvoice, getAllinvoices, getInvoicesById, getPendingInvoices, getinvoicesVerificationById, issueInvoice } from "../dbConnection/invoices.ts";
-import * as mw from "../middlewares.ts"
+import express, { type Request, type Response } from "npm:express@4.18.2";
 import { getPaymentsByInvoice } from "../dbConnection/payments.ts";
-import { Iinvoice } from "../types/invoice.ts";
 import { parseInvoiceForJson } from "../functions/parseInvoices.ts";
+import { permissionsList } from "../functions/PermissionHelper.ts";
+import { Iinvoice } from "../types/invoice.ts";
+import * as mw from "../middlewares.ts"
 
 const invoiceRoutes = express.Router()
 
+const anyPermissionList = [
+    permissionsList.abonarFactura,
+    permissionsList.anularFactura,
+    permissionsList.listarFacturas,
+    permissionsList.generarFactura
+]
+
 // Obtener pagos para una factura
-invoiceRoutes.get('/:invoiceId/payments', mw.departmentWorker, async(req, res) => {
+invoiceRoutes.get('/:invoiceId/payments', mw.multiplePermission(anyPermissionList), async(req: Request, res: Response) => {
     try{
         const invoiceId = req.params.invoiceId;
         const dbResponse = await getPaymentsByInvoice(invoiceId);
@@ -20,7 +28,7 @@ invoiceRoutes.get('/:invoiceId/payments', mw.departmentWorker, async(req, res) =
 })
 
 //Obtener facturas en estado pendiente
-invoiceRoutes.get('/pending/:page', mw.departmentWorker, async (req, res) => {
+invoiceRoutes.get('/pending/:page', mw.multiplePermission(anyPermissionList), async (req: Request, res: Response) => {
     const page = Number(req.params.page)
     try{
         const dbResponse: Iinvoice[] = await getPendingInvoices(page)
@@ -33,7 +41,7 @@ invoiceRoutes.get('/pending/:page', mw.departmentWorker, async (req, res) => {
 })
 
 //Obtener facturas en estado pendiente filtrado por ID de estudiante
-invoiceRoutes.get('/pending/:patientId/:page', mw.departmentWorker, async (req, res) => {
+invoiceRoutes.get('/pending/:patientId/:page', mw.multiplePermission(anyPermissionList), async (req: Request, res: Response) => {
     const patientId = req.params.patientId
     const page = Number(req.params.page)
     try{
@@ -47,7 +55,7 @@ invoiceRoutes.get('/pending/:patientId/:page', mw.departmentWorker, async (req, 
 })
 
 //Obtener facturas por cedula de estudiante
-invoiceRoutes.get('/:studentId/:page', mw.departmentWorker, async (req, res) => {
+invoiceRoutes.get('/:studentId/:page', mw.multiplePermission(anyPermissionList), async (req: Request, res: Response) => {
     const studentId = req.params.studentId
     const page = Number(req.params.page)
     try{
@@ -61,7 +69,7 @@ invoiceRoutes.get('/:studentId/:page', mw.departmentWorker, async (req, res) => 
 })
 
 //Obtener todas las facturas
-invoiceRoutes.get('/:page', mw.departmentWorker, async (req, res) => {
+invoiceRoutes.get('/:page', mw.multiplePermission(anyPermissionList), async (req: Request, res: Response) => {
     const page = Number(req.params.page)
     try{
         const dbResponse = await getAllinvoices(page)
@@ -74,7 +82,7 @@ invoiceRoutes.get('/:page', mw.departmentWorker, async (req, res) => {
 })
 
 //Emitir nueva factura
-invoiceRoutes.post('/', mw.departmentWorker, async (req, res) => {
+invoiceRoutes.post('/', mw.singlePermission(permissionsList.generarFactura), async (req: Request, res: Response) => {
     try {
         const dbResponse = await issueInvoice(req.body)
         if(dbResponse === true){
@@ -89,7 +97,7 @@ invoiceRoutes.post('/', mw.departmentWorker, async (req, res) => {
 })
 
 // Reversar una factura
-invoiceRoutes.delete("/:invoiceId", mw.departmentWorker, async(req, res) => {
+invoiceRoutes.delete("/:invoiceId", mw.singlePermission(permissionsList.anularFactura), async(req: Request, res: Response) => {
     try{
         const invoiceId: string = req.params.invoiceId;
         const _dbResponse = await cancelInvoice(invoiceId)

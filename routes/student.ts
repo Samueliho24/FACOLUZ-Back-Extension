@@ -1,15 +1,26 @@
-import express from "npm:express@4.18.2";
-import * as mw from '../middlewares.ts'
-import { createStudentCohort, getEnrollmentHistory, getLastEnrollmentByStudentId } from "../dbConnection/enrollments.ts";
 import { deactivateStudent, filterStudents, getStudentById, getStudentCardInfo, getStudents, registerStudents } from "../dbConnection/students.ts";
-import { buildCarnet } from "../PdfModels/carnet.ts";
-import { getDocumentsList } from "../dbConnection/documents.ts";
+import { createStudentCohort, getEnrollmentHistory, getLastEnrollmentByStudentId } from "../dbConnection/enrollments.ts";
+import express, { type Request, type Response } from "npm:express@4.18.2";
 import { ICreateStudentCohort } from "../types/ICreateStudentCohort.ts";
+import { permissionsList } from "../functions/PermissionHelper.ts";
+import { getDocumentsList } from "../dbConnection/documents.ts";
+import { buildCarnet } from "../PdfModels/carnet.ts";
+import * as mw from '../middlewares.ts'
 
 const studentRoutes = express.Router();
 
+const anyPermissionList = [
+    permissionsList.listarEstudiantes,
+    permissionsList.agregarEstudiante,
+    permissionsList.desactivarEstudiante,
+    permissionsList.actualizarFotoEstudiante,
+    permissionsList.imprimirCarnetEstudiante,
+    permissionsList.subirDocumentoEstudiante,
+    permissionsList.descargarDocumentoEstudiante
+]
+
 //Crear nuevo estudiante
-studentRoutes.post('/', mw.departmentWorker, async (req, res) => {
+studentRoutes.post('/', mw.singlePermission(permissionsList.agregarEstudiante), async (req: Request, res: Response) => {
     try{
         const _dbResponse = await registerStudents(req.body)
         res.status(200).send()
@@ -20,7 +31,7 @@ studentRoutes.post('/', mw.departmentWorker, async (req, res) => {
 })
 
 //Subir o actualizar foto de estudiante
-studentRoutes.post("/:studentId/photo", mw.parseFormData, mw.departmentWorker, async (req, res) => {
+studentRoutes.post("/:studentId/photo", mw.parseFormData, mw.singlePermission(permissionsList.actualizarFotoEstudiante), (req: Request, res: Response) => {
     try{
         const studentId = req.params.studentId
         const file = req.file
@@ -33,7 +44,7 @@ studentRoutes.post("/:studentId/photo", mw.parseFormData, mw.departmentWorker, a
 })
 
 //desactivar estudiante
-studentRoutes.post("/:studentId/deactivate", mw.departmentWorker, async(req, res) => {
+studentRoutes.post("/:studentId/deactivate", mw.singlePermission(permissionsList.desactivarEstudiante), async(req: Request, res: Response) => {
     const studentId = req.params.studentId;
     try {
         const dbResponse = await deactivateStudent(studentId);
@@ -44,7 +55,7 @@ studentRoutes.post("/:studentId/deactivate", mw.departmentWorker, async(req, res
     }
 })
 
-studentRoutes.post('/cohort', mw.departmentWorker, async(req, res) => {
+studentRoutes.post('/cohort', mw.singlePermission(permissionsList.inscribir), async(req: Request, res: Response) => {
     try{
         const data: ICreateStudentCohort = req.body;
         const dbResponse = await createStudentCohort(data)
@@ -56,7 +67,7 @@ studentRoutes.post('/cohort', mw.departmentWorker, async(req, res) => {
 })
 
 //Obtener ultima inscripcion de un estudiante
-studentRoutes.get('/:studentId/lastEnrollment', mw.departmentWorker, async (req, res) => {
+studentRoutes.get('/:studentId/lastEnrollment', mw.singlePermission(permissionsList.inscribir), async (req: Request, res: Response) => {
     const id = Number(req.params.studentId)
     try{
         const dbResponse = await getLastEnrollmentByStudentId(id)
@@ -72,7 +83,7 @@ studentRoutes.get('/:studentId/lastEnrollment', mw.departmentWorker, async (req,
 })
 
 //Obtener estudiante por cedula
-studentRoutes.get('/:identification', mw.departmentWorker,  async (req, res) => {
+studentRoutes.get('/:identification', mw.multiplePermission(anyPermissionList),  async (req: Request, res: Response) => {
     const identification = Number(req.params.identification)
     try{
         const dbResponse = await getStudentById(identification)
@@ -88,7 +99,7 @@ studentRoutes.get('/:identification', mw.departmentWorker,  async (req, res) => 
 })
 
 //Obtener lista de estudiantes
-studentRoutes.get('/list/:page', mw.departmentWorker, async (req, res) => {
+studentRoutes.get('/list/:page', mw.multiplePermission(anyPermissionList), async (req: Request, res: Response) => {
     const page = Number(req.params.page)
     try{
         const dbResponse = await getStudents(page)
@@ -100,7 +111,7 @@ studentRoutes.get('/list/:page', mw.departmentWorker, async (req, res) => {
 })
 
 //Lista de estudiantes filtrados por numero de cedula 
-studentRoutes.get("/list/:param", mw.departmentWorker, async(req, res) => {
+studentRoutes.get("/list/:param", mw.multiplePermission(anyPermissionList), async(req: Request, res: Response) => {
     try{
         const param = req.params.param;
         const dbResponse = await filterStudents(param)
@@ -112,7 +123,7 @@ studentRoutes.get("/list/:param", mw.departmentWorker, async(req, res) => {
 })
 
 //Descargar carnet de un estudiante
-studentRoutes.get("/:studentId/card", mw.departmentWorker, async(req, res) => {
+studentRoutes.get("/:studentId/card", mw.singlePermission(permissionsList.imprimirCarnetEstudiante), async(req: Request, res: Response) => {
     try{
         const studentId = req.params.studentId;
         const dbResponse = await getStudentCardInfo(studentId)
@@ -137,7 +148,7 @@ studentRoutes.get("/:studentId/card", mw.departmentWorker, async(req, res) => {
 })
 
 //Obtener lista de documentos para un estudiante
-studentRoutes.get("/:studentId/docs", mw.departmentWorker, async(req, res) => {
+studentRoutes.get("/:studentId/docs", mw.singlePermission(permissionsList.descargarDocumentoEstudiante), async(req: Request, res: Response) => {
 	try{
 		const studentId = req.params.studentId;
 		const dbResponse = await getDocumentsList(studentId)
@@ -149,7 +160,7 @@ studentRoutes.get("/:studentId/docs", mw.departmentWorker, async(req, res) => {
 })
 
 //Historial de inscripciones para un alumno
-studentRoutes.get('/:studentId/history', mw.departmentWorker, async (req, res) => {
+studentRoutes.get('/:studentId/history', mw.singlePermission(permissionsList.inscribir), async (req: Request, res: Response) => {
     const { studentId } = req.params;
     console.log(studentId)
     try {

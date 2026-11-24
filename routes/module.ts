@@ -1,14 +1,22 @@
-import express from "npm:express@4.18.2";
-import * as mw from '../middlewares.ts'
-import { deactivateModule, filterModules, getAllModules, getSearchedModule, setModule } from "../dbConnection/modules.ts";
+import { deactivateModule, filterModules, getAllModules, setModule } from "../dbConnection/modules.ts";
 import { getEnrolledStudentsByModule } from "../dbConnection/students.ts";
+import express, { type Request, type Response } from "npm:express@4.18.2";
+import { permissionsList } from "../functions/PermissionHelper.ts";
 import { getSectionByModule } from "../dbConnection/section.ts";
+import * as mw from '../middlewares.ts'
 
 const moduleRouter = express.Router();
 
+const anyPermissionList = [
+    permissionsList.crearModulo,
+    permissionsList.editarModulo,
+    permissionsList.listarModulos,
+    permissionsList.desactivarModulo
+]
+
 //Crear modulo
-moduleRouter.post('/', mw.departmentWorker, async (req, res) => {
-    const {description} = req.body
+moduleRouter.post('/', mw.singlePermission(permissionsList.crearModulo), async (req: Request, res: Response) => {
+    const { description } = req.body
     try{
         const _dbResponse = await setModule(description)
         res.status(200).send()		
@@ -19,7 +27,7 @@ moduleRouter.post('/', mw.departmentWorker, async (req, res) => {
 })
 
 // Desactivar modulo
-moduleRouter.post('/:moduleId/deactivate', mw.departmentWorker, async (req, res) => {
+moduleRouter.post('/:moduleId/deactivate', mw.singlePermission(permissionsList.desactivarModulo), async (req: Request, res: Response) => {
     const moduleId = req.params.moduleId
     try{
         await deactivateModule(moduleId)
@@ -31,7 +39,7 @@ moduleRouter.post('/:moduleId/deactivate', mw.departmentWorker, async (req, res)
 })
 
 // Obtener todos los modulos
-moduleRouter.get('/', mw.departmentWorker, async (req, res) => {
+moduleRouter.get('/', mw.multiplePermission(anyPermissionList), async (req: Request, res: Response) => {
     try{
         const dbResponse = await getAllModules()
         res.status(200).send(dbResponse)
@@ -42,7 +50,7 @@ moduleRouter.get('/', mw.departmentWorker, async (req, res) => {
 })
 
 //Filtrar modulos segun descripcion
-moduleRouter.get('/:searchParam', mw.departmentWorker, async (req, res) => {
+moduleRouter.get('/:searchParam', mw.multiplePermission(anyPermissionList), async (req: Request, res: Response) => {
     const searchParam = req.params.searchParam;
     try{
         const dbResponse = await filterModules(searchParam)
@@ -54,7 +62,7 @@ moduleRouter.get('/:searchParam', mw.departmentWorker, async (req, res) => {
 })
 
 //Obtener estudiantes para un modulo determinado
-moduleRouter.get('/:moduleId/students', mw.departmentWorker, async (req, res) => {
+moduleRouter.get('/:moduleId/students', mw.multiplePermission(anyPermissionList), async (req: Request, res: Response) => {
     const moduleId = req.params.moduleId
     try{
         const dbResponse = await getEnrolledStudentsByModule(moduleId)
@@ -66,7 +74,7 @@ moduleRouter.get('/:moduleId/students', mw.departmentWorker, async (req, res) =>
 })
 
 // De verdad que no se que hace esto
-// moduleRouter.get('/:moduleId/sections', mw.departmentWorker, async (req, res) => {
+// moduleRouter.get('/:moduleId/sections', mw.departmentWorker, async (req: Request, res: Response) => {
 //     const { moduleId } = req.params;
 //     const { sectionCode, periodId } = req.query;
 //     console.log(moduleId, sectionCode, periodId)
@@ -81,7 +89,7 @@ moduleRouter.get('/:moduleId/students', mw.departmentWorker, async (req, res) =>
 // });
 
 // Obtener secciones de un modulo
-moduleRouter.get('/:moduleId/sections', mw.departmentWorker, async (req, res) => {
+moduleRouter.get('/:moduleId/sections', mw.multiplePermission(anyPermissionList), async (req: Request, res: Response) => {
     const moduleId = req.params.moduleId
     try {
         const dbResponse = await getSectionByModule(moduleId)

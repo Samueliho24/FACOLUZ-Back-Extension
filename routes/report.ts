@@ -1,12 +1,13 @@
-import express from "npm:express@4.18.2";
-import * as mw from '../middlewares.ts'
+import express, { type Response, type Request } from "npm:express@4.18.2";
+import { permissionsList } from "../functions/PermissionHelper.ts";
 import { getReportInfo } from "../dbConnection/reports.ts";
 import { BuildReport } from "../PdfModels/DailyReport.ts";
+import * as mw from '../middlewares.ts';
 
 const reportRoutes = express.Router();
 
 //Emitir reporte diario
-reportRoutes.get('/daily', mw.departmentWorker, async (req, res) => {
+reportRoutes.get('/daily', mw.singlePermission(permissionsList.emitirReportes), async (_req: Request, res: Response) => {
     try{
 
         const currentDate = new Date
