@@ -1,11 +1,18 @@
-import express from "npm:express@4.18.2";
+import express, { type Request, type Response } from "npm:express@4.18.2";
 import * as mw from '../middlewares.ts'
 import { deactivateTeacher, filterTeachers, getTeachers, registerTeacher } from "../dbConnection/teachers.ts";
+import { permissionsList } from "../functions/PermissionHelper.ts";
 
 const teacherRoutes = express.Router();
 
+const anyPermissionList = [
+    permissionsList.listarProfesores,
+    permissionsList.agregarProfesor,
+    permissionsList.desactivarProfesor
+]
+
 //Obtener lista de profesor
-teacherRoutes.get("/:page", mw.departmentWorker, async(req, res) => {
+teacherRoutes.get("/:page", mw.multiplePermission(anyPermissionList), async(req: Request, res: Response) => {
     const page = Number(req.params.page)
     try{
         const dbResponse = await getTeachers(page)
@@ -17,7 +24,7 @@ teacherRoutes.get("/:page", mw.departmentWorker, async(req, res) => {
 })
 
 //Obtener lista de profesores filtrada por numero de cedula o nombre
-teacherRoutes.get("/list/:param", mw.departmentWorker, async(req, res) => {
+teacherRoutes.get("/list/:param", mw.multiplePermission(anyPermissionList), async(req: Request, res: Response) => {
     try{
         const { param } = req.params;
         const dbResponse = await filterTeachers(param)
@@ -29,7 +36,7 @@ teacherRoutes.get("/list/:param", mw.departmentWorker, async(req, res) => {
 })
 
 // Crear nuevo profesor
-teacherRoutes.post("/", mw.departmentWorker, async(req, res) => {
+teacherRoutes.post("/", mw.singlePermission(permissionsList.agregarProfesor), async(req: Request, res: Response) => {
     try{
         const dbResponse = await registerTeacher(req.body)
         res.status(200).send(dbResponse)
@@ -40,7 +47,7 @@ teacherRoutes.post("/", mw.departmentWorker, async(req, res) => {
 })
 
 //desactivar profesor
-teacherRoutes.post("/:teacherId/deactivate", mw.departmentWorker, async(req, res) => {
+teacherRoutes.post("/:teacherId/deactivate", mw.singlePermission(permissionsList.desactivarProfesor), async(req: Request, res: Response) => {
     const { id } = req.body;
     try {
         const dbResponse = await deactivateTeacher(id);

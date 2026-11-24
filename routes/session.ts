@@ -2,6 +2,7 @@ import express from "npm:express@4.18.2";
 import { login } from "../dbConnection/system.ts";
 import jwt from 'npm:jsonwebtoken'
 import { secret } from "../main.ts";
+import { ITokenPayload } from "../types/ITokenPayload.ts";
 
 const sessionRoutes = express.Router();
 
@@ -17,11 +18,12 @@ sessionRoutes.post('/login', async (req, res) => {
         }else if(dbResponse[0].active == false){
             res.status(404).send('Este usuario se encuentra inactivo')
         }else{
-            const token = jwt.sign({
+            const token: ITokenPayload = jwt.sign({
                 id: dbResponse[0].id,
                 name: dbResponse[0].name,
                 type: dbResponse[0].type,
-                exp: Math.floor(Date.now() / 1000) + 60000
+                exp: Math.floor(Date.now() / 1000) + 60000,
+                permissions: dbResponse[0].permissions.toString()
             }, secret)
             res.status(200).send({...dbResponse[0], jwt: token})
         }
