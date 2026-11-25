@@ -35,13 +35,20 @@ export function multiplePermission(permissions: number[]){
 				res.status(401).send('Sesion expirada')
 			}
 			
-			permissions.forEach(permission => {
-				if(verifyPermission(BigInt(payload.permissions), permission)){
-					next()
-				}
-			});
+			let passing = false
 
-			res.status(403).send("Consulte permisos con su superior")
+			for(let i = 0; i <= permissions.length; i++){
+				if((verifyPermission(BigInt(payload.permissions), permissions[i])) && (passing == false)){
+					passing = true
+				}
+			}
+
+			if(passing){
+				next()
+			}else{
+				res.status(403).send("Consulte permisos con su superior")
+			}
+
 		}catch(err){
 			console.log(err)
 			return res.status(400).send('Token no válido');

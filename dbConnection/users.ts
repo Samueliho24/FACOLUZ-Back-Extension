@@ -2,16 +2,19 @@ import { query, execute } from "../dbConnection.ts";
 import { IUser } from "../types/IUser.ts"
 
 export async function getAllUsers(page: number){
-    const res = await query(`
+    const res: IUser[] = await query(`
         SELECT 
             id,
             name,
             lastname,
             type,
-            active
+            active,
+            permissions
         FROM users
         LIMIT 10 OFFSET ?
     `, [(page-1)*10])
+
+    res.map(item => {item.permissions = item.permissions.toString(); return item})
 
     return res;
 }

@@ -23,7 +23,7 @@ sessionRoutes.post('/login', async (req: Request, res: Response) => {
                 name: dbResponse[0].name,
                 type: dbResponse[0].type,
                 exp: Math.floor(Date.now() / 1000) + 60000,
-                permissions: dbResponse[0].permissions.toString()
+                permissions: dbResponse[0].permissions
             }, secret)
             res.status(200).send({...dbResponse[0], jwt: token})
         }

@@ -1,4 +1,4 @@
-import { createNewUser, deactivateUser, getAllUsers, getUserById, reactivateUser, updatePassword, updateUser, updateUserType } from "../dbConnection/users.ts";
+import { createNewUser, deactivateUser, getAllUsers, getUserById, reactivateUser, updatePassword, updateUser } from "../dbConnection/users.ts";
 import express, { type Request, type Response } from "npm:express@4.18.2";
 import { IFilterUsers } from "../types/filterObjects/IFilterUsers.ts";
 import { permissionsList } from "../functions/PermissionHelper.ts";
@@ -9,9 +9,7 @@ const userRoutes = express.Router();
 
 const anyPermissionsList = [
 	permissionsList.listarUsuarios,
-	permissionsList.agregarUsuario,
-	permissionsList.desactivarUsuario,
-	permissionsList.modificarPermisosUsuario
+	permissionsList.administrarUsuarios
 ]
 
 //Lista de usuarios
@@ -44,7 +42,7 @@ userRoutes.get('/:id', mw.multiplePermission(anyPermissionsList), async(req: Req
 })
 
 // Crear nuevo usuario
-userRoutes.post('/', mw.singlePermission(permissionsList.agregarUsuario), async (req: Request, res: Response) => {
+userRoutes.post('/', mw.singlePermission(permissionsList.administrarUsuarios), async (req: Request, res: Response) => {
 	try{
 		const user = req.body;
 		const _dbResponse = await createNewUser(user)
@@ -56,7 +54,7 @@ userRoutes.post('/', mw.singlePermission(permissionsList.agregarUsuario), async 
 })
 
 // Reactivar un usuario
-userRoutes.post('/:userId/reactivate', mw.singlePermission(permissionsList.agregarUsuario), async (req: Request, res: Response) => {
+userRoutes.post('/:userId/reactivate', mw.singlePermission(permissionsList.administrarUsuarios), async (req: Request, res: Response) => {
 	try{
 		const userId = req.params.userId;
 		const _dbResponse = await reactivateUser(userId)
@@ -68,7 +66,7 @@ userRoutes.post('/:userId/reactivate', mw.singlePermission(permissionsList.agreg
 })
 
 //Actualzar un usuario
-userRoutes.patch('/', mw.singlePermission(permissionsList.modificarPermisosUsuario), async (req: Request, res: Response) => {
+userRoutes.patch('/', mw.singlePermission(permissionsList.administrarUsuarios), async (req: Request, res: Response) => {
 	try{
 		const user = req.body;
 		const _dbResponse = await updateUser(user)
@@ -79,7 +77,7 @@ userRoutes.patch('/', mw.singlePermission(permissionsList.modificarPermisosUsuar
 	}
 })
 
-userRoutes.delete("/:userId", mw.singlePermission(permissionsList.desactivarUsuario), async (req: Request, res: Response) => {
+userRoutes.delete("/:userId", mw.singlePermission(permissionsList.administrarUsuarios), async (req: Request, res: Response) => {
 	try{
 		const userId: number = req.params.userId;
 		const _dbResponse = await deactivateUser(userId)
@@ -90,7 +88,7 @@ userRoutes.delete("/:userId", mw.singlePermission(permissionsList.desactivarUsua
 	}
 })
 
-userRoutes.patch('/updatePassword', mw.singlePermission(permissionsList.modificarPermisosUsuario), async (req: Request, res: Response) => {
+userRoutes.patch('/updatePassword', mw.singlePermission(permissionsList.administrarUsuarios), async (req: Request, res: Response) => {
 	try{
 		const { userId, newPassword } = req.body
 		const _dbResponse = await updatePassword(userId, await encrypt(newPassword))

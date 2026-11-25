@@ -4,5 +4,6 @@ export interface IUser{
     lastname: string,
     passwordSHA256?: string,
     type: number,
-    active: boolean
+    active: boolean,
+    permissions: bigint | string
 }
